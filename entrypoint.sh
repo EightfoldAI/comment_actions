@@ -53,6 +53,7 @@ already_needs_ci=false
 already_needs_ci_3=false
 already_shipit=false
 already_verified=false
+already_verified_3=false
 
 if [[ "$action" != "created" ]]; then
   echo This action should only be called when a comment is created on a pull request
@@ -64,6 +65,9 @@ if [[ $comment_body == "shipit" ]]; then
     case $label in
       ci_verified)
         already_verified=true
+        ;;
+      "ci_verified:py3")
+        already_verified_3=true
         ;;
       shipit)
         already_shipit=true
@@ -82,7 +86,7 @@ if [[ $comment_body == "shipit" ]]; then
   if [[ "$already_verified" == false && "$already_needs_ci" == false ]]; then
     add_label "needs_ci"
   fi
-  if [[ "$already_verified" == false && "$already_needs_ci_3" == false ]]; then
+  if [[ "$already_verified_3" == false && "$already_needs_ci_3" == false ]]; then
     add_label "needs_ci:py3"
   fi
   if [[ "$already_shipit" == false ]]; then
