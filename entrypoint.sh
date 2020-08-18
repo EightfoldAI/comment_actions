@@ -51,6 +51,7 @@ labels=$(jq --raw-output .issue.labels[].name "$GITHUB_EVENT_PATH")
 
 already_needs_ci=false
 already_needs_ci_3=false
+already_needs_ci_selenium=false
 already_shipit=false
 already_verified=false
 already_verified_3=false
@@ -95,7 +96,7 @@ if [[ $comment_body == "shipit" ]]; then
   exit 0
 fi
 
-if [[ $comment_body == "needs_ci" ]]; then
+if [[ $comment_body == "needs_ci" || $comment_body == "needs_ci:selenium" ]]; then
   for label in $labels; do
     case $label in
       ci_verified)
@@ -107,6 +108,9 @@ if [[ $comment_body == "needs_ci" ]]; then
       needs_ci)
         already_needs_ci=true
         ;;
+      "needs_ci:selenium")
+        already_needs_ci_selenium=true
+        ;;
       *)
         echo "Unknown label $label"
         ;;
@@ -114,6 +118,8 @@ if [[ $comment_body == "needs_ci" ]]; then
   done
   if [[ "$already_needs_ci" == false ]]; then
     add_label "needs_ci"
+    if [[ "$already_needs_ci_selenium" == false ]]; then
+      add_label "needs_ci:selenium"
+    fi
   fi
 fi
-
