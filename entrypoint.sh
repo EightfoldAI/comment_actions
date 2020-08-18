@@ -118,7 +118,7 @@ if [[ $comment_body == "needs_ci" || $comment_body == "needs_ci:selenium" ]]; th
   done
   if [[ "$already_needs_ci" == false ]]; then
     add_label "needs_ci"
-    if [[ "$already_needs_ci_selenium" == false ]]; then
+    if [[ "$already_needs_ci_selenium" == false && $comment_body == "needs_ci:selenium" ]]; then
       add_label "needs_ci:selenium"
     fi
   fi
