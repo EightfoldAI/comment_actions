@@ -87,9 +87,9 @@ if [[ $comment_body == "shipit" ]]; then
   if [[ "$already_verified" == false && "$already_needs_ci" == false ]]; then
     add_label "needs_ci"
   fi
-  if [[ "$already_verified_3" == false && "$already_needs_ci_3" == false ]]; then
-    add_label "needs_ci:py3"
-  fi
+#   if [[ "$already_verified_3" == false && "$already_needs_ci_3" == false ]]; then
+#     add_label "needs_ci:py3"
+#   fi
   if [[ "$already_shipit" == false ]]; then
     add_label "shipit"
   fi
