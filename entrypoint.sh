@@ -87,19 +87,22 @@ if [[ $comment_body == "shipit" ]]; then
   if [[ "$already_verified" == false && "$already_needs_ci" == false ]]; then
     add_label "needs_ci"
   fi
-#   if [[ "$already_verified_3" == false && "$already_needs_ci_3" == false ]]; then
-#     add_label "needs_ci:py3"
-#   fi
+  if [[ "$already_verified_3" == false && "$already_needs_ci_3" == false ]]; then
+    add_label "needs_ci:py3"
+  fi
   if [[ "$already_shipit" == false ]]; then
     add_label "shipit"
   fi
   exit 0
 fi
 
-if [[ $comment_body == "needs_ci" || $comment_body == "needs_ci:selenium" ]]; then
+if [[ $comment_body == "needs_ci" || $comment_body == "needs_ci:selenium" || $comment_body == "needs_ci:py3" ]]; then
   for label in $labels; do
     case $label in
       ci_verified)
+        remove_label "$label"
+        ;;
+      "ci_verified:py3")
         remove_label "$label"
         ;;
       shipit)
@@ -111,6 +114,9 @@ if [[ $comment_body == "needs_ci" || $comment_body == "needs_ci:selenium" ]]; th
       "needs_ci:selenium")
         already_needs_ci_selenium=true
         ;;
+      "needs_ci:py3")
+        already_needs_ci_3=true
+        ;;
       *)
         echo "Unknown label $label"
         ;;
@@ -121,5 +127,8 @@ if [[ $comment_body == "needs_ci" || $comment_body == "needs_ci:selenium" ]]; th
     if [[ "$already_needs_ci_selenium" == false && $comment_body == "needs_ci:selenium" ]]; then
       add_label "needs_ci:selenium"
     fi
+  fi
+  if [[ "$already_needs_ci_3" == false ]]; then
+    add_label "needs_ci:py3"
   fi
 fi
