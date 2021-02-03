@@ -49,6 +49,11 @@ comment_body=$(jq --raw-output .comment.body "$GITHUB_EVENT_PATH")
 number=$(jq --raw-output .issue.number "$GITHUB_EVENT_PATH")
 labels=$(jq --raw-output .issue.labels[].name "$GITHUB_EVENT_PATH")
 
+echo $action
+echo $comment_body
+echo $number
+echo $labels
+
 already_needs_ci=false
 already_needs_ci_3=false
 already_needs_ci_selenium=false
