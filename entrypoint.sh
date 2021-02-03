@@ -66,7 +66,7 @@ if [[ "$action" != "created" ]]; then
   exit 0
 fi
 
-if [[ $comment_body == "shipit" || $comment_body == ":shipit:" ]]; then
+if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body == ":shipit: " ]]; then
   for label in $labels; do
     case $label in
       ci_verified)
