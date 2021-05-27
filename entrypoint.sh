@@ -2,7 +2,7 @@
 # Varun Chopra <vchopra@eightfold.ai>
 #
 # This action runs every time a comment is added to a pull request.
-# Accepts the following commands: shipit, needs_ci
+# Accepts the following commands: shipit, needs_ci, needs_sandbox
 
 set -e
 
@@ -38,6 +38,7 @@ remove_label(){
     -X DELETE \
     "${URI}/repos/${GITHUB_REPOSITORY}/issues/${number}/labels/${1}"
 }
+IFS=$'\n'
 
 URI="https://api.github.com"
 API_HEADER="Accept: application/vnd.github.v3+json"
@@ -136,4 +137,55 @@ if [[ $comment_body == "needs_ci" || $comment_body == "needs_ci:selenium" || $co
   if [[ "$already_needs_ci_3" == false ]]; then
     add_label "needs_ci:py3"
   fi
+fi
+
+# Add sandbox is needs_sandbox
+# Remove stop_sandbox if sandbox is requested again
+already_needs_sandbox=false
+
+if [[ $comment_body == "needs_sandbox" || $comment_body == "needs_sandbox:eu" || $comment_body == "needs_sandbox:gov" ]]; then
+  for label in $labels; do
+    case $label in
+      sandbox)
+        already_needs_sandbox=true
+        ;;
+      "sandbox :eu:")
+        already_needs_sandbox=true
+	      ;;
+      "sandbox :classical_building:")
+        already_needs_sandbox=true
+	      ;;
+      *)
+        echo "Unknown label $label"
+        ;;
+    esac
+  done
+  if [[ "$already_needs_sandbox" == false ]]; then
+    if [[ $comment_body == "needs_sandbox:eu" ]]; then
+      add_label "sandbox :eu:"
+    elif [[ $comment_body == "needs_sandbox:gov" ]]; then
+      add_label "sandbox :classical_building:"
+    else
+      add_label "sandbox"
+    fi
+  fi
+fi
+
+if [[ $comment_body == "stop_sandbox" ]]; then
+  for label in $labels; do
+    case $label in
+      sandbox)
+        remove_label "sandbox"
+        ;;
+      "sandbox :eu:")
+        remove_label "sandbox%20:eu:"
+	      ;;
+      "sandbox :classical_building:")
+        remove_label "sandbox%20:classical_building:"
+        ;;
+      *)
+        echo "Unknown label $label"
+        ;;
+    esac
+  done
 fi
