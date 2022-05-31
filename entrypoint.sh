@@ -116,7 +116,7 @@ fi
 # Remove stop_sandbox if sandbox is requested again
 already_needs_sandbox=false
 
-if [[ $comment_body == "needs_sandbox" || $comment_body == "needs_sandbox:eu" || $comment_body == "needs_sandbox:gov" ]]; then
+if [[ $comment_body == "needs_sandbox" || $comment_body == "needs_sandbox:eu" || $comment_body == "needs_sandbox:ca" || $comment_body == "needs_sandbox:gov" ]]; then
   for label in $labels; do
     case $label in
       sandbox)
@@ -124,10 +124,13 @@ if [[ $comment_body == "needs_sandbox" || $comment_body == "needs_sandbox:eu" ||
         ;;
       "sandbox :eu:")
         already_needs_sandbox=true
-	      ;;
+        ;;
+      "sandbox :maple_leaf:")
+        already_needs_sandbox=true
+        ;;
       "sandbox :classical_building:")
         already_needs_sandbox=true
-	      ;;
+        ;;
       *)
         echo "Unknown label $label"
         ;;
@@ -136,6 +139,8 @@ if [[ $comment_body == "needs_sandbox" || $comment_body == "needs_sandbox:eu" ||
   if [[ "$already_needs_sandbox" == false ]]; then
     if [[ $comment_body == "needs_sandbox:eu" ]]; then
       add_label "sandbox :eu:"
+    elif [[ $comment_body == "needs_sandbox:ca" ]]; then
+      add_label "sandbox :maple_leaf:"
     elif [[ $comment_body == "needs_sandbox:gov" ]]; then
       add_label "sandbox :classical_building:"
     else
@@ -152,7 +157,10 @@ if [[ $comment_body == "stop_sandbox" ]]; then
         ;;
       "sandbox :eu:")
         remove_label "sandbox%20:eu:"
-	      ;;
+        ;;
+      "sandbox :maple_leaf:")
+        remove_label "sandbox%20:maple_leaf:"
+        ;;
       "sandbox :classical_building:")
         remove_label "sandbox%20:classical_building:"
         ;;
