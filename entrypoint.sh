@@ -116,12 +116,15 @@ fi
 # Remove stop_sandbox if sandbox is requested again
 already_needs_sandbox=false
 
-if [[ $comment_body == "needs_sandbox" || $comment_body == "needs_sandbox:eu" || $comment_body == "needs_sandbox:ca" || $comment_body == "needs_sandbox:gov" ]]; then
+if [[ $comment_body == "needs_sandbox" || $comment_body == "needs_sandbox:eu" || $comment_body == "needs_sandbox:uae" || $comment_body == "needs_sandbox:ca" || $comment_body == "needs_sandbox:gov" ]]; then
   for label in $labels; do
     case $label in
       sandbox)
         already_needs_sandbox=true
         ;;
+      "sandbox :united_arab_emirates:")
+	already_needs_sandbox=true
+	;;
       "sandbox :eu:")
         already_needs_sandbox=true
         ;;
@@ -143,6 +146,8 @@ if [[ $comment_body == "needs_sandbox" || $comment_body == "needs_sandbox:eu" ||
       add_label "sandbox :maple_leaf:"
     elif [[ $comment_body == "needs_sandbox:gov" ]]; then
       add_label "sandbox :classical_building:"
+    elif [[ $comment_body == "needs_sandbox:uae" ]]; then
+      add_label "sandbox :united_arab_emirates:"
     else
       add_label "sandbox"
     fi
@@ -164,6 +169,9 @@ if [[ $comment_body == "stop_sandbox" ]]; then
       "sandbox :classical_building:")
         remove_label "sandbox%20:classical_building:"
         ;;
+      "sandbox :united_arab_emirates:")
+	remove_label "sandbox%20:united_arab_emirates:"
+	;;
       *)
         echo "Unknown label $label"
         ;;
