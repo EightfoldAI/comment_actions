@@ -56,8 +56,10 @@ echo $number
 echo $labels
 
 already_needs_ci=false
+already_needs_ci_3_11=false
 already_shipit=false
 already_verified=false
+already_verified_3_11=false
 
 if [[ "$action" != "created" ]]; then
   echo This action should only be called when a comment is created on a pull request
@@ -70,11 +72,17 @@ if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body 
       ci_verified)
         already_verified=true
         ;;
+      "ci_verified:py3.11")
+        already_verified_3_11=true
+        ;;
       shipit)
         already_shipit=true
         ;;
       needs_ci)
         already_needs_ci=true
+        ;;
+      "needs_ci:py3.11")
+        already_needs_ci_3_11=true
         ;;
       *)
         echo "Unknown label $label"
@@ -83,6 +91,9 @@ if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body 
   done
   if [[ "$already_verified" == false && "$already_needs_ci" == false ]]; then
     add_label "needs_ci"
+  fi
+  if [[ "$already_verified_3_11" == false && "$already_needs_ci_3_11" == false ]]; then
+    add_label "needs_ci:py3.11"
   fi
   if [[ "$already_shipit" == false ]]; then
     add_label "shipit"
@@ -109,6 +120,28 @@ if [[ $comment_body == "needs_ci" ]]; then
   done
   if [[ "$already_needs_ci" == false ]]; then
     add_label "needs_ci"
+  fi
+fi
+
+if [[ $comment_body == "needs_ci:py3.11" ]]; then
+  for label in $labels; do
+    case $label in
+      "ci_verified:py3.11")
+        remove_label "$label"
+        ;;
+      shipit)
+        remove_label "$label"
+        ;;
+      "needs_ci:py.11")
+        already_needs_ci_3_11=true
+        ;;
+      *)
+        echo "Unknown label $label"
+        ;;
+    esac
+  done
+  if [[ "$already_needs_ci_3_11" == false ]]; then
+    add_label "needs_ci:py3.11"
   fi
 fi
 
