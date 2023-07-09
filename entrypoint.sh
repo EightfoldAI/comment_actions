@@ -72,7 +72,7 @@ if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body 
       ci_verified)
         already_verified=true
         ;;
-      "ci_verified:py3.11")
+      "ci_verified:3.11")
         already_verified_3_11=true
         ;;
       shipit)
@@ -81,7 +81,7 @@ if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body 
       needs_ci)
         already_needs_ci=true
         ;;
-      "needs_ci:py3.11")
+      "needs_ci:3.11")
         already_needs_ci_3_11=true
         ;;
       *)
@@ -93,7 +93,7 @@ if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body 
     add_label "needs_ci"
   fi
   if [[ "$already_verified_3_11" == false && "$already_needs_ci_3_11" == false ]]; then
-    add_label "needs_ci:py3.11"
+    add_label "needs_ci:3.11"
   fi
   if [[ "$already_shipit" == false ]]; then
     add_label "shipit"
@@ -123,16 +123,16 @@ if [[ $comment_body == "needs_ci" ]]; then
   fi
 fi
 
-if [[ $comment_body == "needs_ci:py3.11" ]]; then
+if [[ $comment_body == "needs_ci:3.11" ]]; then
   for label in $labels; do
     case $label in
-      "ci_verified:py3.11")
+      "ci_verified:3.11")
         remove_label "$label"
         ;;
       shipit)
         remove_label "$label"
         ;;
-      "needs_ci:py.11")
+      "needs_ci:3.11")
         already_needs_ci_3_11=true
         ;;
       *)
@@ -141,7 +141,7 @@ if [[ $comment_body == "needs_ci:py3.11" ]]; then
     esac
   done
   if [[ "$already_needs_ci_3_11" == false ]]; then
-    add_label "needs_ci:py3.11"
+    add_label "needs_ci:3.11"
   fi
 fi
 
