@@ -159,8 +159,8 @@ if [[ $comment_body == "needs_sandbox" || $comment_body == "needs_sandbox:eu" ||
         already_needs_sandbox=true
         ;;
       "sandbox :united_arab_emirates:")
-        already_needs_sandbox=true
-        ;;
+	already_needs_sandbox=true
+	;;
       "sandbox :eu:")
         already_needs_sandbox=true
         ;;
