@@ -149,15 +149,18 @@ fi
 # Remove stop_sandbox if sandbox is requested again
 already_needs_sandbox=false
 
-if [[ $comment_body == "needs_sandbox" || $comment_body == "needs_sandbox:eu" || $comment_body == "needs_sandbox:uae" || $comment_body == "needs_sandbox:ca" || $comment_body == "needs_sandbox:gov" ]]; then
+if [[ $comment_body == "needs_sandbox" || $comment_body == "needs_sandbox:eu" || $comment_body == "needs_sandbox:uae" || $comment_body == "needs_sandbox:ca" || $comment_body == "needs_sandbox:gov" || $comment_body == "needs_sandbox:3.11" ]]; then
   for label in $labels; do
     case $label in
       sandbox)
         already_needs_sandbox=true
         ;;
+      "sandbox:3.11")
+        already_needs_sandbox=true
+        ;;
       "sandbox :united_arab_emirates:")
-	already_needs_sandbox=true
-	;;
+        already_needs_sandbox=true
+        ;;
       "sandbox :eu:")
         already_needs_sandbox=true
         ;;
@@ -181,6 +184,8 @@ if [[ $comment_body == "needs_sandbox" || $comment_body == "needs_sandbox:eu" ||
       add_label "sandbox :classical_building:"
     elif [[ $comment_body == "needs_sandbox:uae" ]]; then
       add_label "sandbox :united_arab_emirates:"
+    elif [[ $comment_body == "needs_sandbox:3.11" ]]; then
+      add_label "sandbox:3.11"
     else
       add_label "sandbox"
     fi
@@ -192,6 +197,9 @@ if [[ $comment_body == "stop_sandbox" ]]; then
     case $label in
       sandbox)
         remove_label "sandbox"
+        ;;
+      "sandbox:3.11")
+        remove_label "sandbox:3.11"
         ;;
       "sandbox :eu:")
         remove_label "sandbox%20:eu:"
