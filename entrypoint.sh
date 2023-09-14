@@ -56,8 +56,10 @@ echo $number
 echo $labels
 
 already_needs_ci=false
+already_needs_ci_3_11=false
 already_shipit=false
 already_verified=false
+already_verified_3_11=false
 
 if [[ "$action" != "created" ]]; then
   echo This action should only be called when a comment is created on a pull request
@@ -70,11 +72,17 @@ if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body 
       ci_verified)
         already_verified=true
         ;;
+      "ci_verified:3.11")
+        already_verified_3_11=true
+        ;;
       shipit)
         already_shipit=true
         ;;
       needs_ci)
         already_needs_ci=true
+        ;;
+      "needs_ci:3.11")
+        already_needs_ci_3_11=true
         ;;
       *)
         echo "Unknown label $label"
@@ -83,6 +91,9 @@ if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body 
   done
   if [[ "$already_verified" == false && "$already_needs_ci" == false ]]; then
     add_label "needs_ci"
+  fi
+  if [[ "$already_verified_3_11" == false && "$already_needs_ci_3_11" == false ]]; then
+    add_label "needs_ci:3.11"
   fi
   if [[ "$already_shipit" == false ]]; then
     add_label "shipit"
@@ -112,14 +123,39 @@ if [[ $comment_body == "needs_ci" ]]; then
   fi
 fi
 
+if [[ $comment_body == "needs_ci:3.11" ]]; then
+  for label in $labels; do
+    case $label in
+      "ci_verified:3.11")
+        remove_label "$label"
+        ;;
+      shipit)
+        remove_label "$label"
+        ;;
+      "needs_ci:3.11")
+        already_needs_ci_3_11=true
+        ;;
+      *)
+        echo "Unknown label $label"
+        ;;
+    esac
+  done
+  if [[ "$already_needs_ci_3_11" == false ]]; then
+    add_label "needs_ci:3.11"
+  fi
+fi
+
 # Add sandbox is needs_sandbox
 # Remove stop_sandbox if sandbox is requested again
 already_needs_sandbox=false
 
-if [[ $comment_body == "needs_sandbox" || $comment_body == "needs_sandbox:eu" || $comment_body == "needs_sandbox:uae" || $comment_body == "needs_sandbox:ca" || $comment_body == "needs_sandbox:gov" ]]; then
+if [[ $comment_body == "needs_sandbox" || $comment_body == "needs_sandbox:eu" || $comment_body == "needs_sandbox:uae" || $comment_body == "needs_sandbox:ca" || $comment_body == "needs_sandbox:gov" || $comment_body == "needs_sandbox:3.11" ]]; then
   for label in $labels; do
     case $label in
       sandbox)
+        already_needs_sandbox=true
+        ;;
+      "sandbox:3.11")
         already_needs_sandbox=true
         ;;
       "sandbox :united_arab_emirates:")
@@ -148,6 +184,8 @@ if [[ $comment_body == "needs_sandbox" || $comment_body == "needs_sandbox:eu" ||
       add_label "sandbox :classical_building:"
     elif [[ $comment_body == "needs_sandbox:uae" ]]; then
       add_label "sandbox :united_arab_emirates:"
+    elif [[ $comment_body == "needs_sandbox:3.11" ]]; then
+      add_label "sandbox:3.11"
     else
       add_label "sandbox"
     fi
@@ -159,6 +197,9 @@ if [[ $comment_body == "stop_sandbox" ]]; then
     case $label in
       sandbox)
         remove_label "sandbox"
+        ;;
+      "sandbox:3.11")
+        remove_label "sandbox:3.11"
         ;;
       "sandbox :eu:")
         remove_label "sandbox%20:eu:"
