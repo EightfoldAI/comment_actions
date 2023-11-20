@@ -123,7 +123,7 @@ if [[ $comment_body == "needs_ci" ]]; then
   fi
 fi
 
-if [[ $comment_body == "needs_ci:3.11" ]]; then
+if [[ $comment_body == "needs_ci:3.11" || $comment_body == "needs_ci" ]]; then
   for label in $labels; do
     case $label in
       "ci_verified:3.11")
