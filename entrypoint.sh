@@ -116,7 +116,7 @@ fi
 # Remove stop_sandbox if sandbox is requested again
 already_needs_sandbox=false
 
-if [[ $comment_body =~ ^needs_sandbox(:(eu|gov|ca|uae))?(:(([0-9]+)(\.([0-9]+)?)?))?\s*$ ]]; then
+if [[ $comment_body =~ ^needs_sandbox(:(eu|gov|ca|uae))?(:(([0-9]+)(\.([0-9]+)?)?))?([ \t]*)?$ ]]; then
   for label in $labels; do
     case $label in
       sandbox)
