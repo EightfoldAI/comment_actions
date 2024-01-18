@@ -116,7 +116,7 @@ fi
 # Remove stop_sandbox if sandbox is requested again
 already_needs_sandbox=false
 
-if [[ $comment_body == "needs_sandbox" || $comment_body == "needs_sandbox:eu" || $comment_body == "needs_sandbox:uae" || $comment_body == "needs_sandbox:ca" || $comment_body == "needs_sandbox:gov" ]]; then
+if [[ $comment_body =~ ^needs_sandbox(:(eu|gov|ca|uae))?(:(([0-9]+)(\.([0-9]+)?)?))?([ \t]*)?$ ]]; then
   for label in $labels; do
     case $label in
       sandbox)
@@ -140,13 +140,13 @@ if [[ $comment_body == "needs_sandbox" || $comment_body == "needs_sandbox:eu" ||
     esac
   done
   if [[ "$already_needs_sandbox" == false ]]; then
-    if [[ $comment_body == "needs_sandbox:eu" ]]; then
+    if [[ $comment_body =~ needs_sandbox:eu  ]]; then
       add_label "sandbox :eu:"
-    elif [[ $comment_body == "needs_sandbox:ca" ]]; then
+    elif [[ $comment_body =~ needs_sandbox:ca ]]; then
       add_label "sandbox :maple_leaf:"
-    elif [[ $comment_body == "needs_sandbox:gov" ]]; then
+    elif [[ $comment_body =~ needs_sandbox:gov  ]]; then
       add_label "sandbox :classical_building:"
-    elif [[ $comment_body == "needs_sandbox:uae" ]]; then
+    elif [[ $comment_body =~ needs_sandbox:uae  ]]; then
       add_label "sandbox :united_arab_emirates:"
     else
       add_label "sandbox"
