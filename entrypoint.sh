@@ -58,6 +58,7 @@ echo $labels
 already_needs_ci=false
 already_shipit=false
 already_verified=false
+already_needs_ci_lite=false
 
 if [[ "$action" != "created" ]]; then
   echo This action should only be called when a comment is created on a pull request
@@ -109,6 +110,28 @@ if [[ $comment_body == "needs_ci" ]]; then
   done
   if [[ "$already_needs_ci" == false ]]; then
     add_label "needs_ci"
+  fi
+fi
+
+if [[ $comment_body == "needs_ci:lite" ]]; then
+  for label in $labels; do
+    case $label in
+      ci_verified:lite)
+        remove_label "$label"
+        ;;
+      shipit)
+        remove_label "$label"
+        ;;
+      needs_ci:lite)
+        already_needs_ci_lite=true
+        ;;
+      *)
+        echo "Unknown label $label"
+        ;;
+    esac
+  done
+  if [[ "$already_needs_ci_lite" == false ]]; then
+    add_label "needs_ci:lite"
   fi
 fi
 
