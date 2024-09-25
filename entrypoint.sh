@@ -97,9 +97,6 @@ if [[ $comment_body == "needs_ci" ]]; then
       ci_verified)
         remove_label "$label"
         ;;
-      shipit)
-        remove_label "$label"
-        ;;
       needs_ci)
         already_needs_ci=true
         ;;
@@ -117,9 +114,6 @@ if [[ $comment_body == "needs_ci:lite" ]]; then
   for label in $labels; do
     case $label in
       ci_verified:lite)
-        remove_label "$label"
-        ;;
-      shipit)
         remove_label "$label"
         ;;
       needs_ci:lite)
