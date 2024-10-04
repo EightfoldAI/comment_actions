@@ -47,6 +47,8 @@ AUTH_HEADER="Authorization: token ${GITHUB_TOKEN}"
 # action
 action=$(jq --raw-output .action "$GITHUB_EVENT_PATH")
 comment_body=$(jq --raw-output .comment.body "$GITHUB_EVENT_PATH")
+# Trim leading/trailing spaces and newlines
+comment_body=$(echo "$comment_body" | xargs) 
 number=$(jq --raw-output .issue.number "$GITHUB_EVENT_PATH")
 labels=$(jq --raw-output .issue.labels[].name "$GITHUB_EVENT_PATH")
 
