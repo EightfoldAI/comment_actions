@@ -57,9 +57,11 @@ echo $comment_body
 echo $number
 echo $labels
 
+already_needs_ci_3_13=false
 already_needs_ci=false
 already_shipit=false
 already_verified=false
+already_verified_3_13=false
 already_needs_ci_lite=false
 
 if [[ "$action" != "created" ]]; then
@@ -79,6 +81,9 @@ if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body 
       needs_ci)
         already_needs_ci=true
         ;;
+      # needs_ci:3.13)
+      #   already_needs_ci_3_13=true
+      #   ;;
       *)
         echo "Unknown label $label"
         ;;
@@ -87,6 +92,9 @@ if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body 
   if [[ "$already_verified" == false && "$already_needs_ci" == false ]]; then
     add_label "needs_ci"
   fi
+  # if [[ "$already_verified_3_13" == false && "$already_needs_ci_3_13" == false ]]; then
+  #   add_label "needs_ci:3.13"
+  # fi
   if [[ "$already_shipit" == false ]]; then
     add_label "shipit"
   fi
@@ -128,6 +136,28 @@ if [[ $comment_body == "needs_ci:lite" ]]; then
   done
   if [[ "$already_needs_ci_lite" == false ]]; then
     add_label "needs_ci:lite"
+  fi
+fi
+
+if [[ $comment_body == "needs_ci:3.13" ]]; then
+  for label in $labels; do
+    case $label in
+      "ci_verified:3.13")
+        remove_label "$label"
+        ;;
+      # shipit)
+      #   remove_label "$label"
+      #   ;;
+      "needs_ci:3.13")
+        already_needs_ci_3_13=true
+        ;;
+      *)
+        echo "Unknown label $label"
+        ;;
+    esac
+  done
+  if [[ "$already_needs_ci_3_13" == false ]]; then
+    add_label "needs_ci:3.13"
   fi
 fi
 
