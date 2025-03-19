@@ -147,9 +147,6 @@ if [[ $comment_body == "needs_ci:3.13" ]]; then
       "ci_verified:3.13")
         remove_label "$label"
         ;;
-      # shipit)
-      #   remove_label "$label"
-      #   ;;
       "needs_ci:3.13")
         already_needs_ci_3_13=true
         ;;
