@@ -63,12 +63,14 @@ already_shipit=false
 already_verified=false
 already_verified_3_13=false
 already_needs_ci_lite=false
+already_needs_ci_3_13_lite=false
 
 if [[ "$action" != "created" ]]; then
   echo This action should only be called when a comment is created on a pull request
   exit 0
 fi
 
+# TO DO: Uncomment CI 3.13 to make it blocking
 if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body == ":shipit: " || $comment_body == "sudo shipit"* || $comment_body == "sudo :shipit:"* ]]; then
   for label in $labels; do
     case $label in
@@ -158,6 +160,25 @@ if [[ $comment_body == "needs_ci:3.13" ]]; then
   done
   if [[ "$already_needs_ci_3_13" == false ]]; then
     add_label "needs_ci:3.13"
+  fi
+fi
+
+if [[ $comment_body == "needs_ci:3.13:lite" ]]; then
+  for label in $labels; do
+    case $label in
+      ci_verified:3.13:lite)
+        remove_label "$label"
+        ;;
+      needs_ci:3.13:lite)
+        already_needs_ci_3_13_lite=true
+        ;;
+      *)
+        echo "Unknown label $label"
+        ;;
+    esac
+  done
+  if [[ "$already_needs_ci_3_13_lite" == false ]]; then
+    add_label "needs_ci:3.13:lite"
   fi
 fi
 
