@@ -182,6 +182,51 @@ fi
 # Add sandbox is needs_sandbox
 # Remove stop_sandbox if sandbox is requested again
 already_needs_sandbox=false
+already_needs_alternate_version_sandbox=false
+alternate_python_version="3.13"
+
+if [[ $comment_body =~ ^needs_sandbox(_${alternate_python_version})(:(eu|gov|ca|uae|wu))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?([ \t]*)?$ ]]; then
+  for label in $labels; do
+    case $label in
+      sandbox:${alternate_python_version})
+        already_needs_sandbox=true
+        ;;
+      "sandbox:${alternate_python_version} :united_arab_emirates:")
+	already_needs_sandbox=true
+	;;
+      "sandbox:${alternate_python_version} :eu:")
+        already_needs_sandbox=true
+        ;;
+      "sandbox:${alternate_python_version} :maple_leaf:")
+        already_needs_sandbox=true
+        ;;
+      "sandbox:${alternate_python_version} :classical_building:")
+        already_needs_sandbox=true
+        ;;
+      "sandbox:${alternate_python_version} :us:")
+        already_needs_sandbox=true
+        ;;
+      *)
+        echo "Unknown label $label"
+        ;;
+    esac
+  done
+  if [[ "$already_needs_sandbox" == false ]]; then
+    if [[ $comment_body =~ needs_sandbox_${alternate_python_version}:eu  ]]; then
+      add_label "sandbox:${alternate_python_version} :eu:"
+    elif [[ $comment_body =~ needs_sandbox_${alternate_python_version}:ca ]]; then
+      add_label "sandbox:${alternate_python_version} :maple_leaf:"
+    elif [[ $comment_body =~ needs_sandbox_${alternate_python_version}:gov  ]]; then
+      add_label "sandbox:${alternate_python_version} :classical_building:"
+    elif [[ $comment_body =~ needs_sandbox_${alternate_python_version}:uae  ]]; then
+      add_label "sandbox:${alternate_python_version} :united_arab_emirates:"
+    elif [[ $comment_body =~ needs_sandbox_${alternate_python_version}:wu  ]]; then
+      add_label "sandbox:${alternate_python_version} :us:"
+    else
+      add_label "sandbox:${alternate_python_version}"
+    fi
+  fi
+fi
 
 if [[ $comment_body =~ ^needs_sandbox(:(eu|gov|ca|uae|wu))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?([ \t]*)?$ ]]; then
   for label in $labels; do
@@ -242,11 +287,29 @@ if [[ $comment_body == "stop_sandbox" ]]; then
         remove_label "sandbox%20:classical_building:"
         ;;
       "sandbox :united_arab_emirates:")
-	remove_label "sandbox%20:united_arab_emirates:"
-	;;
+	      remove_label "sandbox%20:united_arab_emirates:"
+	      ;;
       "sandbox :us:")
-	remove_label "sandbox%20:us:"
-	;;
+	      remove_label "sandbox%20:us:"
+	      ;;
+      sandbox:${alternate_python_version})
+        remove_label "sandbox:${alternate_python_version}"
+        ;;
+      "sandbox:${alternate_python_version} :eu:")
+        remove_label "sandbox:${alternate_python_version}%20:eu:"
+        ;;
+      "sandbox:${alternate_python_version} :maple_leaf:")
+        remove_label "sandbox:${alternate_python_version}%20:maple_leaf:"
+        ;;
+      "sandbox:${alternate_python_version} :classical_building:")
+        remove_label "sandbox:${alternate_python_version}%20:classical_building:"
+        ;;
+      "sandbox:${alternate_python_version} :united_arab_emirates:")
+	      remove_label "sandbox:${alternate_python_version}%20:united_arab_emirates:"
+	      ;;
+      "sandbox:${alternate_python_version} :us:")
+	      remove_label "sandbox:${alternate_python_version}%20:us:"
+	      ;;
       *)
         echo "Unknown label $label"
         ;;
