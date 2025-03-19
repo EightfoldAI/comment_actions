@@ -212,15 +212,15 @@ if [[ $comment_body =~ ^needs_sandbox(_${alternate_python_version})(:(eu|gov|ca|
     esac
   done
   if [[ "$already_needs_sandbox" == false ]]; then
-    if [[ $comment_body =~ needs_sandbox_${alternate_python_version}:eu  ]]; then
+    if [[ $comment_body =~ needs_sandbox:${alternate_python_version}:eu  ]]; then
       add_label "sandbox:${alternate_python_version} :eu:"
-    elif [[ $comment_body =~ needs_sandbox_${alternate_python_version}:ca ]]; then
+    elif [[ $comment_body =~ needs_sandbox:${alternate_python_version}:ca ]]; then
       add_label "sandbox:${alternate_python_version} :maple_leaf:"
-    elif [[ $comment_body =~ needs_sandbox_${alternate_python_version}:gov  ]]; then
+    elif [[ $comment_body =~ needs_sandbox:${alternate_python_version}:gov  ]]; then
       add_label "sandbox:${alternate_python_version} :classical_building:"
-    elif [[ $comment_body =~ needs_sandbox_${alternate_python_version}:uae  ]]; then
+    elif [[ $comment_body =~ needs_sandbox:${alternate_python_version}:uae  ]]; then
       add_label "sandbox:${alternate_python_version} :united_arab_emirates:"
-    elif [[ $comment_body =~ needs_sandbox_${alternate_python_version}:wu  ]]; then
+    elif [[ $comment_body =~ needs_sandbox:${alternate_python_version}:wu  ]]; then
       add_label "sandbox:${alternate_python_version} :us:"
     else
       add_label "sandbox:${alternate_python_version}"
