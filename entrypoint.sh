@@ -226,9 +226,8 @@ if [[ $comment_body =~ ^needs_sandbox(:${alternate_python_version})(:(eu|gov|ca|
       add_label "sandbox:${alternate_python_version}"
     fi
   fi
-fi
 
-if [[ $comment_body =~ ^needs_sandbox(:(eu|gov|ca|uae|wu))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?([ \t]*)?$ ]]; then
+elif [[ $comment_body =~ ^needs_sandbox(:(eu|gov|ca|uae|wu))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?([ \t]*)?$ ]]; then
   for label in $labels; do
     case $label in
       sandbox)
