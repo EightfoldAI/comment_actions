@@ -64,7 +64,7 @@ already_verified=false
 already_verified_alt=false
 already_needs_ci_lite=false
 already_needs_ci_alt_lite=false
-alt_python_version="3.13"
+alt_python_version=":3.13"
 
 if [[ "$action" != "created" ]]; then
   echo This action should only be called when a comment is created on a pull request
@@ -84,7 +84,7 @@ if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body 
       needs_ci)
         already_needs_ci=true
         ;;
-      # needs_ci:${alt_python_version})
+      # needs_ci${alt_python_version})
       #   already_needs_ci_alt=true
       #   ;;
       *)
@@ -96,7 +96,7 @@ if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body 
     add_label "needs_ci"
   fi
   # if [[ "$already_verified_alt" == false && "$already_needs_ci_alt" == false ]]; then
-  #   add_label "needs_ci:${alt_python_version}"
+  #   add_label "needs_ci${alt_python_version}"
   # fi
   if [[ "$already_shipit" == false ]]; then
     add_label "shipit"
@@ -142,13 +142,13 @@ if [[ $comment_body == "needs_ci:lite" ]]; then
   fi
 fi
 
-if [[ $comment_body == "needs_ci:${alt_python_version}" ]]; then
+if [[ $comment_body == "needs_ci${alt_python_version}" ]]; then
   for label in $labels; do
     case $label in
-      "ci_verified:${alt_python_version}")
+      "ci_verified${alt_python_version}")
         remove_label "$label"
         ;;
-      "needs_ci:${alt_python_version}")
+      "needs_ci${alt_python_version}")
         already_needs_ci_alt=true
         ;;
       *)
@@ -157,17 +157,17 @@ if [[ $comment_body == "needs_ci:${alt_python_version}" ]]; then
     esac
   done
   if [[ "$already_needs_ci_alt" == false ]]; then
-    add_label "needs_ci:${alt_python_version}"
+    add_label "needs_ci${alt_python_version}"
   fi
 fi
 
-if [[ $comment_body == "needs_ci:${alt_python_version}:lite" ]]; then
+if [[ $comment_body == "needs_ci${alt_python_version}:lite" ]]; then
   for label in $labels; do
     case $label in
-      ci_verified:${alt_python_version}:lite)
+      ci_verified${alt_python_version}:lite)
         remove_label "$label"
         ;;
-      needs_ci:${alt_python_version}:lite)
+      needs_ci${alt_python_version}:lite)
         already_needs_ci_alt_lite=true
         ;;
       *)
@@ -176,7 +176,7 @@ if [[ $comment_body == "needs_ci:${alt_python_version}:lite" ]]; then
     esac
   done
   if [[ "$already_needs_ci_alt_lite" == false ]]; then
-    add_label "needs_ci:${alt_python_version}:lite"
+    add_label "needs_ci${alt_python_version}:lite"
   fi
 fi
 
