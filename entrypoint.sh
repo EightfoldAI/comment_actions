@@ -57,20 +57,21 @@ echo $comment_body
 echo $number
 echo $labels
 
-already_needs_ci_3_13=false
+already_needs_ci_alt=false
 already_needs_ci=false
 already_shipit=false
 already_verified=false
-already_verified_3_13=false
+already_verified_alt=false
 already_needs_ci_lite=false
-already_needs_ci_3_13_lite=false
+already_needs_ci_alt_lite=false
+alt_python_version=":3.13"
 
 if [[ "$action" != "created" ]]; then
   echo This action should only be called when a comment is created on a pull request
   exit 0
 fi
 
-# TO DO: Uncomment CI 3.13 to make it blocking
+# TODO: Uncomment CI alt to make it blocking
 if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body == ":shipit: " || $comment_body == "sudo shipit"* || $comment_body == "sudo :shipit:"* ]]; then
   for label in $labels; do
     case $label in
@@ -83,8 +84,8 @@ if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body 
       needs_ci)
         already_needs_ci=true
         ;;
-      # needs_ci:3.13)
-      #   already_needs_ci_3_13=true
+      # needs_ci${alt_python_version})
+      #   already_needs_ci_alt=true
       #   ;;
       *)
         echo "Unknown label $label"
@@ -94,8 +95,8 @@ if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body 
   if [[ "$already_verified" == false && "$already_needs_ci" == false ]]; then
     add_label "needs_ci"
   fi
-  # if [[ "$already_verified_3_13" == false && "$already_needs_ci_3_13" == false ]]; then
-  #   add_label "needs_ci:3.13"
+  # if [[ "$already_verified_alt" == false && "$already_needs_ci_alt" == false ]]; then
+  #   add_label "needs_ci${alt_python_version}"
   # fi
   if [[ "$already_shipit" == false ]]; then
     add_label "shipit"
@@ -112,6 +113,9 @@ if [[ $comment_body == "needs_ci" ]]; then
       needs_ci)
         already_needs_ci=true
         ;;
+      "needs_ci${alt_python_version}")
+        already_needs_ci_alt_python_version=true
+        ;;
       *)
         echo "Unknown label $label"
         ;;
@@ -119,6 +123,9 @@ if [[ $comment_body == "needs_ci" ]]; then
   done
   if [[ "$already_needs_ci" == false ]]; then
     add_label "needs_ci"
+  fi
+  if [[ "$already_needs_ci_alt_python_version" == false ]]; then
+    add_label "needs_ci${alt_python_version}"
   fi
 fi
 
@@ -131,6 +138,9 @@ if [[ $comment_body == "needs_ci:lite" ]]; then
       needs_ci:lite)
         already_needs_ci_lite=true
         ;;
+      "needs_ci${alt_python_version}":lite)
+        already_needs_ci_lite_alt_python_version=true
+        ;;
       *)
         echo "Unknown label $label"
         ;;
@@ -139,43 +149,46 @@ if [[ $comment_body == "needs_ci:lite" ]]; then
   if [[ "$already_needs_ci_lite" == false ]]; then
     add_label "needs_ci:lite"
   fi
-fi
-
-if [[ $comment_body == "needs_ci:3.13" ]]; then
-  for label in $labels; do
-    case $label in
-      "ci_verified:3.13")
-        remove_label "$label"
-        ;;
-      "needs_ci:3.13")
-        already_needs_ci_3_13=true
-        ;;
-      *)
-        echo "Unknown label $label"
-        ;;
-    esac
-  done
-  if [[ "$already_needs_ci_3_13" == false ]]; then
-    add_label "needs_ci:3.13"
+  if [[ "$already_needs_ci_lite_alt_python_version" == false ]]; then
+    add_label "needs_ci${alt_python_version}:lite"
   fi
 fi
 
-if [[ $comment_body == "needs_ci:3.13:lite" ]]; then
+if [[ $comment_body == "needs_ci${alt_python_version}" ]]; then
   for label in $labels; do
     case $label in
-      ci_verified:3.13:lite)
+      "ci_verified${alt_python_version}")
         remove_label "$label"
         ;;
-      needs_ci:3.13:lite)
-        already_needs_ci_3_13_lite=true
+      "needs_ci${alt_python_version}")
+        already_needs_ci_alt=true
         ;;
       *)
         echo "Unknown label $label"
         ;;
     esac
   done
-  if [[ "$already_needs_ci_3_13_lite" == false ]]; then
-    add_label "needs_ci:3.13:lite"
+  if [[ "$already_needs_ci_alt" == false ]]; then
+    add_label "needs_ci${alt_python_version}"
+  fi
+fi
+
+if [[ $comment_body == "needs_ci${alt_python_version}:lite" ]]; then
+  for label in $labels; do
+    case $label in
+      ci_verified${alt_python_version}:lite)
+        remove_label "$label"
+        ;;
+      needs_ci${alt_python_version}:lite)
+        already_needs_ci_alt_lite=true
+        ;;
+      *)
+        echo "Unknown label $label"
+        ;;
+    esac
+  done
+  if [[ "$already_needs_ci_alt_lite" == false ]]; then
+    add_label "needs_ci${alt_python_version}:lite"
   fi
 fi
 
