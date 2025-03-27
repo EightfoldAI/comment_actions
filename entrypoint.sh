@@ -114,7 +114,7 @@ if [[ $comment_body == "needs_ci" ]]; then
         already_needs_ci=true
         ;;
       "needs_ci${alt_python_version}")
-        already_needs_ci_alt_python_version=true
+        already_needs_ci_alt=true
         ;;
       *)
         echo "Unknown label $label"
@@ -124,7 +124,7 @@ if [[ $comment_body == "needs_ci" ]]; then
   if [[ "$already_needs_ci" == false ]]; then
     add_label "needs_ci"
   fi
-  if [[ "$already_needs_ci_alt_python_version" == false ]]; then
+  if [[ "$already_needs_ci_alt" == false ]]; then
     add_label "needs_ci${alt_python_version}"
   fi
 fi
@@ -139,7 +139,7 @@ if [[ $comment_body == "needs_ci:lite" ]]; then
         already_needs_ci_lite=true
         ;;
       "needs_ci${alt_python_version}":lite)
-        already_needs_ci_lite_alt_python_version=true
+        already_needs_ci_lite_alt=true
         ;;
       *)
         echo "Unknown label $label"
@@ -149,7 +149,7 @@ if [[ $comment_body == "needs_ci:lite" ]]; then
   if [[ "$already_needs_ci_lite" == false ]]; then
     add_label "needs_ci:lite"
   fi
-  if [[ "$already_needs_ci_lite_alt_python_version" == false ]]; then
+  if [[ "$already_needs_ci_lite_alt" == false ]]; then
     add_label "needs_ci${alt_python_version}:lite"
   fi
 fi
