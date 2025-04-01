@@ -138,9 +138,6 @@ if [[ $comment_body == "needs_ci:lite" ]]; then
       needs_ci:lite)
         already_needs_ci_lite=true
         ;;
-      "needs_ci${alt_python_version}:lite")
-        already_needs_ci_alt_lite=true
-        ;;
       *)
         echo "Unknown label $label"
         ;;
@@ -148,9 +145,6 @@ if [[ $comment_body == "needs_ci:lite" ]]; then
   done
   if [[ "$already_needs_ci_lite" == false ]]; then
     add_label "needs_ci:lite"
-  fi
-  if [[ "$already_needs_ci_alt_lite" == false ]]; then
-    add_label "needs_ci${alt_python_version}:lite"
   fi
 fi
 
