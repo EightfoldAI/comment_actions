@@ -78,15 +78,18 @@ if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body 
       ci_verified)
         already_verified=true
         ;;
+      ci_verified${alt_python_version})
+        already_verified_alt=true
+        ;;
       shipit)
         already_shipit=true
         ;;
       needs_ci)
         already_needs_ci=true
         ;;
-      # needs_ci${alt_python_version})
-      #   already_needs_ci_alt=true
-      #   ;;
+      needs_ci${alt_python_version})
+        already_needs_ci_alt=true
+        ;;
       *)
         echo "Unknown label $label"
         ;;
@@ -95,9 +98,9 @@ if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body 
   if [[ "$already_verified" == false && "$already_needs_ci" == false ]]; then
     add_label "needs_ci"
   fi
-  # if [[ "$already_verified_alt" == false && "$already_needs_ci_alt" == false ]]; then
-  #   add_label "needs_ci${alt_python_version}"
-  # fi
+  if [[ "$already_verified_alt" == false && "$already_needs_ci_alt" == false ]]; then
+    add_label "needs_ci${alt_python_version}"
+  fi
   if [[ "$already_shipit" == false ]]; then
     add_label "shipit"
   fi
