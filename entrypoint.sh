@@ -78,6 +78,9 @@ if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body 
       ci_verified)
         already_verified=true
         ;;
+      ci_verified${alt_python_version})
+        already_verified_alt=true
+        ;;
       shipit)
         already_shipit=true
         ;;
