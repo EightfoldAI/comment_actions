@@ -1,0 +1,16 @@
+name: Comment Actions
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    if: ${{ !startsWith(github.actor, 'eightfoldbot') }}
+    steps:
+      - name: Log comment info
+        run: |
+          echo "Comment made by: ${{ github.actor }}"
+          echo "Comment ID: ${{ github.event.comment.id }}"
+          echo "Issue/PR number: ${{ github.event.issue.number }}"
+          echo "Comment body: ${{ github.event.comment.body }}"
