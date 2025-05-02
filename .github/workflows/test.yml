@@ -6,7 +6,7 @@ on:
 jobs:
   triage:
     runs-on: ubuntu-latest
-    if: ${{ !startsWith(github.actor, 'eightfoldbot') }}
+    if: ${{ !startsWith(toLower(github.actor), toLower('Eightfoldbot')) }}
     steps:
       - name: Log comment info
         run: |
