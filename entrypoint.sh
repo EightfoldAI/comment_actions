@@ -57,14 +57,16 @@ echo $comment_body
 echo $number
 echo $labels
 
-already_needs_ci_alt=false
+
 already_needs_ci=false
 already_shipit=false
 already_verified=false
 already_verified_alt=false
 already_needs_ci_lite=false
+already_needs_ci_alt=false
 already_needs_ci_alt_lite=false
 alt_python_version=":3.13"
+curr_python_version=":3.13"
 
 if [[ "$action" != "created" ]]; then
   echo This action should only be called when a comment is created on a pull request
@@ -99,7 +101,9 @@ if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body 
     add_label "needs_ci"
   fi
   if [[ "$already_verified_alt" == false && "$already_needs_ci_alt" == false ]]; then
-    add_label "needs_ci${alt_python_version}"
+    if [[ "$curr_python_version" != "$alt_python_version" ]]; then
+      add_label "needs_ci${alt_python_version}"
+    fi
   fi
   if [[ "$already_shipit" == false ]]; then
     add_label "shipit"
@@ -128,7 +132,9 @@ if [[ $comment_body == "needs_ci" ]]; then
     add_label "needs_ci"
   fi
   if [[ "$already_needs_ci_alt" == false ]]; then
-    add_label "needs_ci${alt_python_version}"
+    if [[ "$curr_python_version" != "$alt_python_version" ]]; then
+      add_label "needs_ci${alt_python_version}"
+    fi
   fi
 fi
 
@@ -151,7 +157,7 @@ if [[ $comment_body == "needs_ci:lite" ]]; then
   fi
 fi
 
-if [[ $comment_body == "needs_ci${alt_python_version}" ]]; then
+if [[ $comment_body == "needs_ci${alt_python_version}"  ]]; then
   for label in $labels; do
     case $label in
       "ci_verified${alt_python_version}")
@@ -166,7 +172,9 @@ if [[ $comment_body == "needs_ci${alt_python_version}" ]]; then
     esac
   done
   if [[ "$already_needs_ci_alt" == false ]]; then
-    add_label "needs_ci${alt_python_version}"
+    if [[ "$curr_python_version" != "$alt_python_version" ]]; then
+      add_label "needs_ci${alt_python_version}"
+    fi
   fi
 fi
 
@@ -185,7 +193,9 @@ if [[ $comment_body == "needs_ci${alt_python_version}:lite" ]]; then
     esac
   done
   if [[ "$already_needs_ci_alt_lite" == false ]]; then
-    add_label "needs_ci${alt_python_version}:lite"
+    if [[ "$curr_python_version" != "$alt_python_version" ]]; then
+      add_label "needs_ci${alt_python_version}:lite"
+    fi
   fi
 fi
 
@@ -194,6 +204,7 @@ fi
 already_needs_sandbox=false
 already_needs_alternate_version_sandbox=false
 alternate_python_version="3.13"
+current_python_version="3.13"
 
 if [[ $comment_body =~ ^needs_sandbox(:${alternate_python_version})(:(eu|gov|ca|uae|wu))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?([ \t]*)?$ ]]; then
   for label in $labels; do
@@ -221,7 +232,7 @@ if [[ $comment_body =~ ^needs_sandbox(:${alternate_python_version})(:(eu|gov|ca|
         ;;
     esac
   done
-  if [[ "$already_needs_sandbox" == false ]]; then
+  if [[ "$already_needs_sandbox" == false && "$current_python_version" != "$alternate_python_version" ]]; then
     if [[ $comment_body =~ needs_sandbox:${alternate_python_version}:eu  ]]; then
       add_label "sandbox:${alternate_python_version} :eu:"
     elif [[ $comment_body =~ needs_sandbox:${alternate_python_version}:ca ]]; then
@@ -237,7 +248,7 @@ if [[ $comment_body =~ ^needs_sandbox(:${alternate_python_version})(:(eu|gov|ca|
     fi
   fi
 
-elif [[ $comment_body =~ ^needs_sandbox(:(eu|gov|ca|uae|wu))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?([ \t]*)?$ ]]; then
+if [[ $comment_body =~ ^needs_sandbox(:(eu|gov|ca|uae|wu))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?([ \t]*)?$ ]]; then
   for label in $labels; do
     case $label in
       sandbox)
