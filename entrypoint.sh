@@ -57,7 +57,6 @@ echo $comment_body
 echo $number
 echo $labels
 
-
 already_needs_ci=false
 already_shipit=false
 already_verified=false
@@ -157,7 +156,7 @@ if [[ $comment_body == "needs_ci:lite" ]]; then
   fi
 fi
 
-if [[ $comment_body == "needs_ci${alt_python_version}"  ]]; then
+if [[ $comment_body == "needs_ci${alt_python_version}" ]]; then
   for label in $labels; do
     case $label in
       "ci_verified${alt_python_version}")
@@ -248,7 +247,7 @@ if [[ $comment_body =~ ^needs_sandbox(:${alternate_python_version})(:(eu|gov|ca|
     fi
   fi
 
-if [[ $comment_body =~ ^needs_sandbox(:(eu|gov|ca|uae|wu))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?([ \t]*)?$ ]]; then
+elif [[ $comment_body =~ ^needs_sandbox(:(eu|gov|ca|uae|wu))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?([ \t]*)?$ ]]; then
   for label in $labels; do
     case $label in
       sandbox)
