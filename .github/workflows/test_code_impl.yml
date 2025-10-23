@@ -1,0 +1,93 @@
+name: Code Implementation via Claude
+
+on:
+  workflow_dispatch:
+    inputs:
+      summary:
+        description: 'Summary of changes to make'
+        required: true
+        type: string
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+  id-token: write
+
+jobs:
+  auto-changes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+     - name: Create feature branch
+        id: branch
+        run: |
+          BRANCH_NAME="claude-changes-${{ github.run_id }}"
+          git checkout -b "$BRANCH_NAME"
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+      - name: Make changes with Claude
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          prompt: |
+            You are an AI assistant helping to make changes to a repository and create a Pull Request.
+            
+            IMPORTANT: You must complete ALL the following tasks:
+            
+            Task Summary:
+            ${{ github.event.inputs.summary }}
+            
+            YOUR TASKS:
+            1. Analyze the repository and make all necessary changes according to the summary
+            2. Review all changes you've made
+            3. Commit the changes to the git branch with an appropriate commit message
+            4. Push the branch to the remote repository
+            5. Create a Pull Request with a detailed summary and description
+            
+            DETAILED INSTRUCTIONS:
+            
+            **Step 1-2: Make Changes**
+            - Examine the current repository structure first
+            - Make all necessary file modifications
+            - Ensure changes are consistent with the existing codebase style
+            - Create or modify files as needed
+            
+            **Step 3: Commit Changes**
+            - Use: git add -A
+            - Use: git commit -m "chore: [descriptive message based on changes]"
+            - Include a detailed commit message explaining what was changed
+            
+            **Step 4: Push to Remote**
+            - Use: git push origin ${{ steps.branch.outputs.branch_name }}
+            
+            **Step 5: Create Pull Request**
+            - Use the GitHub CLI (gh pr create) to create a PR with:
+              - Title: A clear, concise title describing the changes
+              - Body: A detailed PR summary including:
+                * What was changed and why
+                * List of files modified
+                * Any important notes or considerations
+                * Reference to the original task
+            - Example: gh pr create --title "Add TypeScript types" --body "This PR adds TypeScript types to all API endpoints..." --base main
+            
+            Guidelines:
+            - Be thorough and complete all tasks in order
+            - The PR body should be well-structured and informative
+            - Include all relevant context in the PR description
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+            - Do not make any changes to master branch
+          claude_args: "--allowedTools 'Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(git:*),Bash(bun:*),Bash(npm:*),Bash(npx:*),Bash(gh:*)'"
+
+      - name: Verify PR Creation
+        run: |
+          echo "✅ Claude has completed all tasks:"
+          echo "  - Made changes to the repository"
+          echo "  - Committed changes to branch: ${{ steps.branch.outputs.branch_name }}"
+          echo "  - Pushed branch to remote"
+          echo "  - Created Pull Request with detailed summary"
+          echo ""
+          echo "Original Task: ${{ github.event.inputs.summary }}"
