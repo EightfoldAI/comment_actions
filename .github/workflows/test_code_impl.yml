@@ -1,5 +1,4 @@
 name: Code Implementation via Claude
-
 on:
   workflow_dispatch:
     inputs:
@@ -12,7 +11,6 @@ permissions:
   pull-requests: write
   actions: read
   id-token: write
-
 jobs:
   auto-changes:
     runs-on: ubuntu-latest
@@ -22,7 +20,12 @@ jobs:
         with:
           fetch-depth: 0
 
-     - name: Create feature branch
+      - name: Setup git identity
+        run: |
+          git config --global user.email "claude[bot]@users.noreply.github.com"
+          git config --global user.name "claude[bot]"
+
+      - name: Create feature branch
         id: branch
         run: |
           BRANCH_NAME="claude-changes-${{ github.run_id }}"
@@ -55,6 +58,7 @@ jobs:
             - Make all necessary file modifications
             - Ensure changes are consistent with the existing codebase style
             - Create or modify files as needed
+            - Do not make any changes to master branch
             
             **Step 3: Commit Changes**
             - Use: git add -A
@@ -79,7 +83,6 @@ jobs:
             - The PR body should be well-structured and informative
             - Include all relevant context in the PR description
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-            - Do not make any changes to master branch
           claude_args: "--allowedTools 'Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(git:*),Bash(bun:*),Bash(npm:*),Bash(npx:*),Bash(gh:*)'"
 
       - name: Verify PR Creation
