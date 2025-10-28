@@ -335,3 +335,35 @@ if [[ $comment_body == "stop_sandbox" ]]; then
     esac
   done
 fi
+
+# Add airflow_sandbox if needs_airflow_sandbox
+already_needs_airflow_sandbox=false
+
+if [[ $comment_body == "needs_airflow_sandbox" ]]; then
+  for label in $labels; do
+    case $label in
+      airflow_sandbox)
+        already_needs_airflow_sandbox=true
+        ;;
+      *)
+        echo "Unknown label $label"
+        ;;
+    esac
+  done
+  if [[ "$already_needs_airflow_sandbox" == false ]]; then
+    add_label "airflow_sandbox"
+  fi
+fi
+
+if [[ $comment_body == "stop_airflow_sandbox" ]]; then
+  for label in $labels; do
+    case $label in
+      airflow_sandbox)
+        remove_label "airflow_sandbox"
+        ;;
+      *)
+        echo "Unknown label $label"
+        ;;
+    esac
+  done
+fi
