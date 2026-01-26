@@ -205,7 +205,7 @@ already_needs_alternate_version_sandbox=false
 alternate_python_version="3.13"
 current_python_version="3.13"
 
-if [[ $comment_body =~ ^needs_sandbox(:${alternate_python_version})(:(eu|gov|ca|uae|wu))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?([ \t]*)?$ ]]; then
+if [[ $comment_body =~ ^needs_sandbox(:${alternate_python_version})(:(eu|gov|ca|uae|wu|ap))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?([ \t]*)?$ ]]; then
   for label in $labels; do
     case $label in
       sandbox:${alternate_python_version})
@@ -226,6 +226,9 @@ if [[ $comment_body =~ ^needs_sandbox(:${alternate_python_version})(:(eu|gov|ca|
       "sandbox:${alternate_python_version} :us:")
         already_needs_sandbox=true
         ;;
+      "sandbox:${alternate_python_version} :australia:")
+        already_needs_sandbox=true
+        ;;
       *)
         echo "Unknown label $label"
         ;;
@@ -242,12 +245,14 @@ if [[ $comment_body =~ ^needs_sandbox(:${alternate_python_version})(:(eu|gov|ca|
       add_label "sandbox:${alternate_python_version} :united_arab_emirates:"
     elif [[ $comment_body =~ needs_sandbox:${alternate_python_version}:wu  ]]; then
       add_label "sandbox:${alternate_python_version} :us:"
+    elif [[ $comment_body =~ needs_sandbox:${alternate_python_version}:ap  ]]; then
+      add_label "sandbox:${alternate_python_version} :australia:"
     else
       add_label "sandbox:${alternate_python_version}"
     fi
   fi
 
-elif [[ $comment_body =~ ^needs_sandbox(:(eu|gov|ca|uae|wu))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?([ \t]*)?$ ]]; then
+elif [[ $comment_body =~ ^needs_sandbox(:(eu|gov|ca|uae|wu|ap))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?([ \t]*)?$ ]]; then
   for label in $labels; do
     case $label in
       sandbox)
@@ -268,6 +273,9 @@ elif [[ $comment_body =~ ^needs_sandbox(:(eu|gov|ca|uae|wu))?(:(dev|([0-9]+)(\.(
       "sandbox :us:")
         already_needs_sandbox=true
         ;;
+      "sandbox :australia:")
+        already_needs_sandbox=true
+        ;;
       *)
         echo "Unknown label $label"
         ;;
@@ -284,6 +292,8 @@ elif [[ $comment_body =~ ^needs_sandbox(:(eu|gov|ca|uae|wu))?(:(dev|([0-9]+)(\.(
       add_label "sandbox :united_arab_emirates:"
     elif [[ $comment_body =~ needs_sandbox:wu  ]]; then
       add_label "sandbox :us:"
+    elif [[ $comment_body =~ needs_sandbox:ap  ]]; then
+      add_label "sandbox :australia:"
     else
       add_label "sandbox"
     fi
@@ -311,6 +321,9 @@ if [[ $comment_body == "stop_sandbox" ]]; then
       "sandbox :us:")
 	      remove_label "sandbox%20:us:"
 	      ;;
+      "sandbox :australia:")
+	      remove_label "sandbox%20:australia:"
+	      ;;
       sandbox:${alternate_python_version})
         remove_label "sandbox:${alternate_python_version}"
         ;;
@@ -328,6 +341,9 @@ if [[ $comment_body == "stop_sandbox" ]]; then
 	      ;;
       "sandbox:${alternate_python_version} :us:")
 	      remove_label "sandbox:${alternate_python_version}%20:us:"
+	      ;;
+      "sandbox:${alternate_python_version} :australia:")
+	      remove_label "sandbox:${alternate_python_version}%20:australia:"
 	      ;;
       *)
         echo "Unknown label $label"
