@@ -1,4 +1,4 @@
-name: "Label pull request"
+name: "Label pull request 2"
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
