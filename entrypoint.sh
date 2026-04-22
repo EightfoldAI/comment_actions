@@ -2,7 +2,7 @@
 # Varun Chopra <vchopra@eightfold.ai>
 #
 # This action runs every time a comment is added to a pull request.
-# Accepts the following commands: shipit, needs_ci, needs_sandbox
+# Accepts the following commands: shipit, needs_ci, needs_sandbox, e2e_needs_sandbox
 
 set -e
 
@@ -198,14 +198,13 @@ if [[ $comment_body == "needs_ci${alt_python_version}:lite" ]]; then
   fi
 fi
 
-# Add sandbox is needs_sandbox
-# Remove stop_sandbox if sandbox is requested again
+# Add sandbox label for needs_sandbox and e2e_needs_sandbox (e2e_ prefix enables local processor)
 already_needs_sandbox=false
 already_needs_alternate_version_sandbox=false
 alternate_python_version="3.13"
 current_python_version="3.13"
 
-if [[ $comment_body =~ ^needs_sandbox(:${alternate_python_version})(:(eu|gov|ca|uae|wu|ap))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?([ \t]*)?$ ]]; then
+if [[ $comment_body =~ ^(e2e_)?needs_sandbox(:${alternate_python_version})(:(eu|gov|ca|uae|wu|ap))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?([ \t]*)?$ ]]; then
   for label in $labels; do
     case $label in
       sandbox:${alternate_python_version})
@@ -235,24 +234,24 @@ if [[ $comment_body =~ ^needs_sandbox(:${alternate_python_version})(:(eu|gov|ca|
     esac
   done
   if [[ "$already_needs_sandbox" == false && "$current_python_version" != "$alternate_python_version" ]]; then
-    if [[ $comment_body =~ needs_sandbox:${alternate_python_version}:eu  ]]; then
+    if [[ $comment_body =~ (e2e_)?needs_sandbox:${alternate_python_version}:eu ]]; then
       add_label "sandbox:${alternate_python_version} :eu:"
-    elif [[ $comment_body =~ needs_sandbox:${alternate_python_version}:ca ]]; then
+    elif [[ $comment_body =~ (e2e_)?needs_sandbox:${alternate_python_version}:ca ]]; then
       add_label "sandbox:${alternate_python_version} :maple_leaf:"
-    elif [[ $comment_body =~ needs_sandbox:${alternate_python_version}:gov  ]]; then
+    elif [[ $comment_body =~ (e2e_)?needs_sandbox:${alternate_python_version}:gov ]]; then
       add_label "sandbox:${alternate_python_version} :classical_building:"
-    elif [[ $comment_body =~ needs_sandbox:${alternate_python_version}:uae  ]]; then
+    elif [[ $comment_body =~ (e2e_)?needs_sandbox:${alternate_python_version}:uae ]]; then
       add_label "sandbox:${alternate_python_version} :united_arab_emirates:"
-    elif [[ $comment_body =~ needs_sandbox:${alternate_python_version}:wu  ]]; then
+    elif [[ $comment_body =~ (e2e_)?needs_sandbox:${alternate_python_version}:wu ]]; then
       add_label "sandbox:${alternate_python_version} :us:"
-    elif [[ $comment_body =~ needs_sandbox:${alternate_python_version}:ap  ]]; then
+    elif [[ $comment_body =~ (e2e_)?needs_sandbox:${alternate_python_version}:ap ]]; then
       add_label "sandbox:${alternate_python_version} :australia:"
     else
       add_label "sandbox:${alternate_python_version}"
     fi
   fi
 
-elif [[ $comment_body =~ ^needs_sandbox(:(eu|gov|ca|uae|wu|ap))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?([ \t]*)?$ ]]; then
+elif [[ $comment_body =~ ^(e2e_)?needs_sandbox(:(eu|gov|ca|uae|wu|ap))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?([ \t]*)?$ ]]; then
   for label in $labels; do
     case $label in
       sandbox)
@@ -282,17 +281,17 @@ elif [[ $comment_body =~ ^needs_sandbox(:(eu|gov|ca|uae|wu|ap))?(:(dev|([0-9]+)(
     esac
   done
   if [[ "$already_needs_sandbox" == false ]]; then
-    if [[ $comment_body =~ needs_sandbox:eu  ]]; then
+    if [[ $comment_body =~ (e2e_)?needs_sandbox:eu ]]; then
       add_label "sandbox :eu:"
-    elif [[ $comment_body =~ needs_sandbox:ca ]]; then
+    elif [[ $comment_body =~ (e2e_)?needs_sandbox:ca ]]; then
       add_label "sandbox :maple_leaf:"
-    elif [[ $comment_body =~ needs_sandbox:gov  ]]; then
+    elif [[ $comment_body =~ (e2e_)?needs_sandbox:gov ]]; then
       add_label "sandbox :classical_building:"
-    elif [[ $comment_body =~ needs_sandbox:uae  ]]; then
+    elif [[ $comment_body =~ (e2e_)?needs_sandbox:uae ]]; then
       add_label "sandbox :united_arab_emirates:"
-    elif [[ $comment_body =~ needs_sandbox:wu  ]]; then
+    elif [[ $comment_body =~ (e2e_)?needs_sandbox:wu ]]; then
       add_label "sandbox :us:"
-    elif [[ $comment_body =~ needs_sandbox:ap  ]]; then
+    elif [[ $comment_body =~ (e2e_)?needs_sandbox:ap ]]; then
       add_label "sandbox :australia:"
     else
       add_label "sandbox"
