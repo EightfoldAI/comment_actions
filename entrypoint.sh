@@ -205,7 +205,7 @@ already_needs_alternate_version_sandbox=false
 alternate_python_version="3.13"
 current_python_version="3.13"
 
-if [[ $comment_body =~ ^needs_sandbox(:${alternate_python_version})(:(eu|gov|ca|uae|wu|ap))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?(:_processor)?([ \t]*)?$ ]]; then
+if [[ $comment_body =~ ^needs_sandbox(:${alternate_python_version})(:(eu|gov|ca|uae|wu|ap))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?([ \t]*)?$ ]]; then
   for label in $labels; do
     case $label in
       sandbox:${alternate_python_version})
@@ -252,7 +252,7 @@ if [[ $comment_body =~ ^needs_sandbox(:${alternate_python_version})(:(eu|gov|ca|
     fi
   fi
 
-elif [[ $comment_body =~ ^needs_sandbox(:(eu|gov|ca|uae|wu|ap))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?(:_processor)?([ \t]*)?$ ]]; then
+elif [[ $comment_body =~ ^needs_sandbox(:(eu|gov|ca|uae|wu|ap))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?([ \t]*)?$ ]]; then
   for label in $labels; do
     case $label in
       sandbox)
@@ -293,6 +293,105 @@ elif [[ $comment_body =~ ^needs_sandbox(:(eu|gov|ca|uae|wu|ap))?(:(dev|([0-9]+)(
     elif [[ $comment_body =~ needs_sandbox:wu  ]]; then
       add_label "sandbox :us:"
     elif [[ $comment_body =~ needs_sandbox:ap  ]]; then
+      add_label "sandbox :australia:"
+    else
+      add_label "sandbox"
+    fi
+  fi
+fi
+
+# Add sandbox label for e2e_needs_sandbox (enables local processor in sandbox)
+already_needs_e2e_sandbox=false
+already_needs_alternate_version_e2e_sandbox=false
+
+if [[ $comment_body =~ ^e2e_needs_sandbox(:${alternate_python_version})(:(eu|gov|ca|uae|wu|ap))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?(:_processor)?([ \t]*)?$ ]]; then
+  for label in $labels; do
+    case $label in
+      sandbox:${alternate_python_version})
+        already_needs_e2e_sandbox=true
+        ;;
+      "sandbox:${alternate_python_version} :united_arab_emirates:")
+        already_needs_e2e_sandbox=true
+        ;;
+      "sandbox:${alternate_python_version} :eu:")
+        already_needs_e2e_sandbox=true
+        ;;
+      "sandbox:${alternate_python_version} :maple_leaf:")
+        already_needs_e2e_sandbox=true
+        ;;
+      "sandbox:${alternate_python_version} :classical_building:")
+        already_needs_e2e_sandbox=true
+        ;;
+      "sandbox:${alternate_python_version} :us:")
+        already_needs_e2e_sandbox=true
+        ;;
+      "sandbox:${alternate_python_version} :australia:")
+        already_needs_e2e_sandbox=true
+        ;;
+      *)
+        echo "Unknown label $label"
+        ;;
+    esac
+  done
+  if [[ "$already_needs_e2e_sandbox" == false && "$current_python_version" != "$alternate_python_version" ]]; then
+    if [[ $comment_body =~ e2e_needs_sandbox:${alternate_python_version}:eu ]]; then
+      add_label "sandbox:${alternate_python_version} :eu:"
+    elif [[ $comment_body =~ e2e_needs_sandbox:${alternate_python_version}:ca ]]; then
+      add_label "sandbox:${alternate_python_version} :maple_leaf:"
+    elif [[ $comment_body =~ e2e_needs_sandbox:${alternate_python_version}:gov ]]; then
+      add_label "sandbox:${alternate_python_version} :classical_building:"
+    elif [[ $comment_body =~ e2e_needs_sandbox:${alternate_python_version}:uae ]]; then
+      add_label "sandbox:${alternate_python_version} :united_arab_emirates:"
+    elif [[ $comment_body =~ e2e_needs_sandbox:${alternate_python_version}:wu ]]; then
+      add_label "sandbox:${alternate_python_version} :us:"
+    elif [[ $comment_body =~ e2e_needs_sandbox:${alternate_python_version}:ap ]]; then
+      add_label "sandbox:${alternate_python_version} :australia:"
+    else
+      add_label "sandbox:${alternate_python_version}"
+    fi
+  fi
+
+elif [[ $comment_body =~ ^e2e_needs_sandbox(:(eu|gov|ca|uae|wu|ap))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?(:_processor)?([ \t]*)?$ ]]; then
+  for label in $labels; do
+    case $label in
+      sandbox)
+        already_needs_e2e_sandbox=true
+        ;;
+      "sandbox :united_arab_emirates:")
+        already_needs_e2e_sandbox=true
+        ;;
+      "sandbox :eu:")
+        already_needs_e2e_sandbox=true
+        ;;
+      "sandbox :maple_leaf:")
+        already_needs_e2e_sandbox=true
+        ;;
+      "sandbox :classical_building:")
+        already_needs_e2e_sandbox=true
+        ;;
+      "sandbox :us:")
+        already_needs_e2e_sandbox=true
+        ;;
+      "sandbox :australia:")
+        already_needs_e2e_sandbox=true
+        ;;
+      *)
+        echo "Unknown label $label"
+        ;;
+    esac
+  done
+  if [[ "$already_needs_e2e_sandbox" == false ]]; then
+    if [[ $comment_body =~ e2e_needs_sandbox:eu ]]; then
+      add_label "sandbox :eu:"
+    elif [[ $comment_body =~ e2e_needs_sandbox:ca ]]; then
+      add_label "sandbox :maple_leaf:"
+    elif [[ $comment_body =~ e2e_needs_sandbox:gov ]]; then
+      add_label "sandbox :classical_building:"
+    elif [[ $comment_body =~ e2e_needs_sandbox:uae ]]; then
+      add_label "sandbox :united_arab_emirates:"
+    elif [[ $comment_body =~ e2e_needs_sandbox:wu ]]; then
+      add_label "sandbox :us:"
+    elif [[ $comment_body =~ e2e_needs_sandbox:ap ]]; then
       add_label "sandbox :australia:"
     else
       add_label "sandbox"
