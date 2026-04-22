@@ -2,7 +2,7 @@
 # Varun Chopra <vchopra@eightfold.ai>
 #
 # This action runs every time a comment is added to a pull request.
-# Accepts the following commands: shipit, needs_ci, needs_sandbox
+# Accepts the following commands: shipit, needs_ci, needs_sandbox, e2e_needs_sandbox
 
 set -e
 
