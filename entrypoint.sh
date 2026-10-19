@@ -44,23 +44,14 @@ URI="https://api.github.com"
 API_HEADER="Accept: application/vnd.github.v3+json"
 AUTH_HEADER="Authorization: token ${GITHUB_TOKEN}"
 
-# --- Which CI to request ---------------------------------------------------------------
-# Two switches, "true" or "false", passed in by the calling workflow from repository
-# variables:
-#   CI_FLEET_TRIGGER  the fleet CI: its labels, needs_ci and needs_ci:lite. Unset = true.
-#   CI_K8S_TRIGGER    CI k8s: its workflows, started with workflow_dispatch.  Unset = false.
-fleet_on() { [[ "${CI_FLEET_TRIGGER:-true}" == "true" ]]; }
-k8s_on() { [[ "${CI_K8S_TRIGGER:-false}" == "true" ]]; }
-
-has_label() {  # has_label <name>: on the PR as this script read it
-  local l
-  for l in $labels; do [[ "$l" == "$1" ]] && return 0; done
-  return 1
-}
-
-# A label added with GITHUB_TOKEN starts no workflow, so CI k8s is started with
+# --- CI k8s --------------------------------------------------------------------------
+# When the repository variable CI_K8S_TRIGGER (passed in by the calling workflow) is
+# "true", every needs_ci / needs_ci:lite this action adds also starts the matching CI k8s
+# workflow. A label added with GITHUB_TOKEN starts no workflow, so it is started with
 # workflow_dispatch, which GITHUB_TOKEN may trigger (needs `actions: write`). Same-repo
 # PRs only: a fork's code must not run on the CI cluster. Never fails the action.
+k8s_on() { [[ "${CI_K8S_TRIGGER:-false}" == "true" ]]; }
+
 same_repo_pr() {
   local head
   head=$(curl -sSL -H "${AUTH_HEADER}" -H "${API_HEADER}" \
@@ -77,14 +68,12 @@ dispatch() {  # dispatch <workflow file> <inputs json>
     "${URI}/repos/${GITHUB_REPOSITORY}/actions/workflows/${1}/dispatches" || true
 }
 
-# k8s_request <workflow file>: start a CI k8s run of this PR. CI k8s is requested exactly
-# when the fleet's needs_ci label would be, and adds no label of its own.
-k8s_request() {
+k8s_request() {  # k8s_request <workflow file>: start a CI k8s run of this PR
   k8s_on || return 0
   same_repo_pr || { echo "CI k8s: not a same-repo PR, skipping $1"; return 0; }
   dispatch "$1" "{\"pr\":\"${number}\"}"
 }
-# ----------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------
 
 # action
 action=$(jq --raw-output .action "$GITHUB_EVENT_PATH")
@@ -139,7 +128,7 @@ if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body 
     esac
   done
   if [[ "$already_verified" == false && "$already_needs_ci" == false ]]; then
-    if fleet_on; then add_label "needs_ci"; fi
+    add_label "needs_ci"
     k8s_request "ci_k8s_full.yml"
   fi
   if [[ "$already_verified_alt" == false && "$already_needs_ci_alt" == false ]]; then
@@ -171,7 +160,7 @@ if [[ $comment_body == "needs_ci" ]]; then
     esac
   done
   if [[ "$already_needs_ci" == false ]]; then
-    if fleet_on; then add_label "needs_ci"; fi
+    add_label "needs_ci"
     k8s_request "ci_k8s_full.yml"
   fi
   if [[ "$already_needs_ci_alt" == false ]]; then
@@ -196,7 +185,7 @@ if [[ $comment_body == "needs_ci:lite" ]]; then
     esac
   done
   if [[ "$already_needs_ci_lite" == false ]]; then
-    if fleet_on; then add_label "needs_ci:lite"; fi
+    add_label "needs_ci:lite"
     k8s_request "ci_k8s_lite.yml"
   fi
 fi
