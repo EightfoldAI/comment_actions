@@ -44,6 +44,51 @@ URI="https://api.github.com"
 API_HEADER="Accept: application/vnd.github.v3+json"
 AUTH_HEADER="Authorization: token ${GITHUB_TOKEN}"
 
+# --- Which CI to request ---------------------------------------------------------------
+# Two switches, "true" or "false", passed in by the calling workflow from repository
+# variables:
+#   CI_FLEET_TRIGGER  the fleet CI's labels: needs_ci, needs_ci:lite. Unset = true.
+#   CI_K8S_TRIGGER    CI k8s's labels:       ci_k8s, ci_k8s:lite.     Unset = false.
+fleet_on() { [[ "${CI_FLEET_TRIGGER:-true}" == "true" ]]; }
+k8s_on() { [[ "${CI_K8S_TRIGGER:-false}" == "true" ]]; }
+
+has_label() {  # has_label <name>: on the PR as this script read it
+  local l
+  for l in $labels; do [[ "$l" == "$1" ]] && return 0; done
+  return 1
+}
+
+# A label added with GITHUB_TOKEN starts no workflow, so CI k8s is started with
+# workflow_dispatch, which GITHUB_TOKEN may trigger (needs `actions: write`). Same-repo
+# PRs only: a fork's code must not run on the CI cluster. Never fails the action.
+same_repo_pr() {
+  local head
+  head=$(curl -sSL -H "${AUTH_HEADER}" -H "${API_HEADER}" \
+    "${URI}/repos/${GITHUB_REPOSITORY}/pulls/${number}" | jq -r '.head.repo.full_name // ""') || return 1
+  [[ "$head" == "$GITHUB_REPOSITORY" ]]
+}
+
+dispatch() {  # dispatch <workflow file> <inputs json>
+  local ref
+  ref=$(jq -r '.repository.default_branch // "master"' "$GITHUB_EVENT_PATH")
+  curl -sSL -o /dev/null -w "dispatch $1: HTTP %{http_code}\n" \
+    -H "${AUTH_HEADER}" -H "${API_HEADER}" -X POST -H "Content-Type: application/json" \
+    -d "{\"ref\":\"${ref}\",\"inputs\":${2}}" \
+    "${URI}/repos/${GITHUB_REPOSITORY}/actions/workflows/${1}/dispatches" || true
+}
+
+# k8s_request <label> <workflow file>: add a CI k8s request label and start its run,
+# unless the PR already has it (a run is in flight; nothing to restart).
+k8s_request() {
+  k8s_on || return 0
+  has_label "$1" && { echo "CI k8s: $1 already on"; return 0; }
+  same_repo_pr || { echo "CI k8s: not a same-repo PR, skipping $1"; return 0; }
+  add_label "$1" > /dev/null || true
+  labels="${labels}"$'\n'"$1"
+  dispatch "$2" "{\"pr\":\"${number}\"}"
+}
+# ----------------------------------------------------------------------------------------
+
 # action
 action=$(jq --raw-output .action "$GITHUB_EVENT_PATH")
 comment_body=$(jq --raw-output .comment.body "$GITHUB_EVENT_PATH")
@@ -96,8 +141,11 @@ if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body 
         ;;
     esac
   done
-  if [[ "$already_verified" == false && "$already_needs_ci" == false ]]; then
+  if [[ "$already_verified" == false && "$already_needs_ci" == false ]] && fleet_on; then
     add_label "needs_ci"
+  fi
+  if [[ "$already_verified" == false ]]; then
+    k8s_request "ci_k8s" "ci_k8s_full.yml"
   fi
   if [[ "$already_verified_alt" == false && "$already_needs_ci_alt" == false ]]; then
     if [[ "$curr_python_version" != "$alt_python_version" ]]; then
@@ -127,9 +175,10 @@ if [[ $comment_body == "needs_ci" ]]; then
         ;;
     esac
   done
-  if [[ "$already_needs_ci" == false ]]; then
+  if [[ "$already_needs_ci" == false ]] && fleet_on; then
     add_label "needs_ci"
   fi
+  k8s_request "ci_k8s" "ci_k8s_full.yml"
   if [[ "$already_needs_ci_alt" == false ]]; then
     if [[ "$curr_python_version" != "$alt_python_version" ]]; then
       add_label "needs_ci${alt_python_version}"
@@ -151,9 +200,10 @@ if [[ $comment_body == "needs_ci:lite" ]]; then
         ;;
     esac
   done
-  if [[ "$already_needs_ci_lite" == false ]]; then
+  if [[ "$already_needs_ci_lite" == false ]] && fleet_on; then
     add_label "needs_ci:lite"
   fi
+  k8s_request "ci_k8s:lite" "ci_k8s_lite.yml"
 fi
 
 if [[ $comment_body == "needs_ci${alt_python_version}" ]]; then
