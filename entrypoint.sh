@@ -50,7 +50,7 @@ AUTH_HEADER="Authorization: token ${GITHUB_TOKEN}"
 # workflow. A label added with GITHUB_TOKEN starts no workflow, so it is started with
 # workflow_dispatch, which GITHUB_TOKEN may trigger (needs `actions: write`). Never fails
 # the action.
-k8s_request() {  # k8s_request <workflow file>: start a CI k8s run of this PR
+ci_k8s_request() {  # ci_k8s_request <workflow file>: start a CI k8s run of this PR
   [[ "${CI_K8S_TRIGGER:-false}" == "true" ]] || return 0
   local ref
   ref=$(jq -r '.repository.default_branch // "master"' "$GITHUB_EVENT_PATH")
@@ -115,7 +115,7 @@ if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body 
   done
   if [[ "$already_verified" == false && "$already_needs_ci" == false ]]; then
     add_label "needs_ci"
-    k8s_request "ci_k8s_full.yml"
+    ci_k8s_request "ci_k8s_full.yml"
   fi
   if [[ "$already_verified_alt" == false && "$already_needs_ci_alt" == false ]]; then
     if [[ "$curr_python_version" != "$alt_python_version" ]]; then
@@ -147,7 +147,7 @@ if [[ $comment_body == "needs_ci" ]]; then
   done
   if [[ "$already_needs_ci" == false ]]; then
     add_label "needs_ci"
-    k8s_request "ci_k8s_full.yml"
+    ci_k8s_request "ci_k8s_full.yml"
   fi
   if [[ "$already_needs_ci_alt" == false ]]; then
     if [[ "$curr_python_version" != "$alt_python_version" ]]; then
@@ -172,7 +172,7 @@ if [[ $comment_body == "needs_ci:lite" ]]; then
   done
   if [[ "$already_needs_ci_lite" == false ]]; then
     add_label "needs_ci:lite"
-    k8s_request "ci_k8s_lite.yml"
+    ci_k8s_request "ci_k8s_lite.yml"
   fi
 fi
 
