@@ -59,6 +59,19 @@ ci_k8s_request() {  # ci_k8s_request <workflow file>: start a CI k8s run of this
     -d "{\"ref\":\"${ref}\",\"inputs\":{\"pr\":\"${number}\"}}" \
     "${URI}/repos/${GITHUB_REPOSITORY}/actions/workflows/${1}/dispatches" || true
 }
+
+# Likewise for the plain `sandbox` label: when SANDBOX_K8S_TRIGGER is "true", adding or
+# removing it here also starts or stops the CI k8s sandbox (sandbox.yml). Never fails the
+# action.
+sandbox_k8s_request() {  # sandbox_k8s_request <start|stop>: start or stop this PR's CI k8s sandbox
+  [[ "${SANDBOX_K8S_TRIGGER:-false}" == "true" ]] || return 0
+  local ref
+  ref=$(jq -r '.repository.default_branch // "master"' "$GITHUB_EVENT_PATH")
+  curl -sSL -o /dev/null -w "dispatch sandbox.yml $1: HTTP %{http_code}\n" \
+    -H "${AUTH_HEADER}" -H "${API_HEADER}" -X POST -H "Content-Type: application/json" \
+    -d "{\"ref\":\"${ref}\",\"inputs\":{\"pr\":\"${number}\",\"action\":\"${1}\"}}" \
+    "${URI}/repos/${GITHUB_REPOSITORY}/actions/workflows/sandbox.yml/dispatches" || true
+}
 # --------------------------------------------------------------------------------------
 
 # action
@@ -315,6 +328,7 @@ elif [[ $comment_body =~ ^(e2e_)?needs_sandbox(:(eu|gov|ca|uae|wu|ap))?(:(dev|([
       add_label "sandbox :australia:"
     else
       add_label "sandbox"
+      sandbox_k8s_request start
     fi
   fi
 fi
@@ -324,6 +338,7 @@ if [[ $comment_body == "stop_sandbox" ]]; then
     case $label in
       sandbox)
         remove_label "sandbox"
+        sandbox_k8s_request stop
         ;;
       "sandbox :eu:")
         remove_label "sandbox%20:eu:"
