@@ -60,16 +60,26 @@ ci_k8s_request() {  # ci_k8s_request <workflow file>: start a CI k8s run of this
     "${URI}/repos/${GITHUB_REPOSITORY}/actions/workflows/${1}/dispatches" || true
 }
 
-# Likewise for the plain `sandbox` label: when SANDBOX_K8S_TRIGGER is "true", adding or
-# removing it here also starts or stops the CI k8s sandbox (sandbox.yml). Never fails the
-# action.
-sandbox_k8s_request() {  # sandbox_k8s_request <start|stop>: start or stop this PR's CI k8s sandbox
+# Likewise for the sandbox labels: when SANDBOX_K8S_TRIGGER is "true", adding or removing
+# one here also starts or stops the CI k8s sandbox (sandbox.yml). Never fails the action.
+#
+# A regional label (`sandbox :australia:` from needs_sandbox:ap) passes its region, the
+# needs_sandbox suffix (eu, ca, gov, uae, wu, ap), only when that region is listed in
+# SANDBOX_K8S_REGIONS (the calling workflow's, space- or comma-separated): a region joins
+# CI k8s by being listed there, with no change here. sandbox.yml rejects a region it does
+# not know (HTTP 422), which leaves the fleet's sandbox alone.
+sandbox_k8s_request() {  # sandbox_k8s_request <start|stop> [region]: start or stop this PR's CI k8s sandbox
   [[ "${SANDBOX_K8S_TRIGGER:-false}" == "true" ]] || return 0
-  local ref
+  local region="${2:-}" inputs ref
+  inputs="\"pr\":\"${number}\",\"action\":\"${1}\""
+  if [[ -n "$region" ]]; then
+    [[ " ${SANDBOX_K8S_REGIONS//,/ } " == *" ${region} "* ]] || return 0
+    inputs="${inputs},\"region\":\"${region}\""
+  fi
   ref=$(jq -r '.repository.default_branch // "master"' "$GITHUB_EVENT_PATH")
-  curl -sSL -o /dev/null -w "dispatch sandbox.yml $1: HTTP %{http_code}\n" \
+  curl -sSL -o /dev/null -w "dispatch sandbox.yml $1 ${region:-us}: HTTP %{http_code}\n" \
     -H "${AUTH_HEADER}" -H "${API_HEADER}" -X POST -H "Content-Type: application/json" \
-    -d "{\"ref\":\"${ref}\",\"inputs\":{\"pr\":\"${number}\",\"action\":\"${1}\"}}" \
+    -d "{\"ref\":\"${ref}\",\"inputs\":{${inputs}}}" \
     "${URI}/repos/${GITHUB_REPOSITORY}/actions/workflows/sandbox.yml/dispatches" || true
 }
 # --------------------------------------------------------------------------------------
@@ -316,16 +326,22 @@ elif [[ $comment_body =~ ^(e2e_)?needs_sandbox(:(eu|gov|ca|uae|wu|ap))?(:(dev|([
   if [[ "$already_needs_sandbox" == false ]]; then
     if [[ $comment_body =~ (e2e_)?needs_sandbox:eu ]]; then
       add_label "sandbox :eu:"
+      sandbox_k8s_request start eu
     elif [[ $comment_body =~ (e2e_)?needs_sandbox:ca ]]; then
       add_label "sandbox :maple_leaf:"
+      sandbox_k8s_request start ca
     elif [[ $comment_body =~ (e2e_)?needs_sandbox:gov ]]; then
       add_label "sandbox :classical_building:"
+      sandbox_k8s_request start gov
     elif [[ $comment_body =~ (e2e_)?needs_sandbox:uae ]]; then
       add_label "sandbox :united_arab_emirates:"
+      sandbox_k8s_request start uae
     elif [[ $comment_body =~ (e2e_)?needs_sandbox:wu ]]; then
       add_label "sandbox :us:"
+      sandbox_k8s_request start wu
     elif [[ $comment_body =~ (e2e_)?needs_sandbox:ap ]]; then
       add_label "sandbox :australia:"
+      sandbox_k8s_request start ap
     else
       add_label "sandbox"
       sandbox_k8s_request start
@@ -342,21 +358,27 @@ if [[ $comment_body == "stop_sandbox" ]]; then
         ;;
       "sandbox :eu:")
         remove_label "sandbox%20:eu:"
+        sandbox_k8s_request stop eu
         ;;
       "sandbox :maple_leaf:")
         remove_label "sandbox%20:maple_leaf:"
+        sandbox_k8s_request stop ca
         ;;
       "sandbox :classical_building:")
         remove_label "sandbox%20:classical_building:"
+        sandbox_k8s_request stop gov
         ;;
       "sandbox :united_arab_emirates:")
 	      remove_label "sandbox%20:united_arab_emirates:"
+	      sandbox_k8s_request stop uae
 	      ;;
       "sandbox :us:")
 	      remove_label "sandbox%20:us:"
+	      sandbox_k8s_request stop wu
 	      ;;
       "sandbox :australia:")
 	      remove_label "sandbox%20:australia:"
+	      sandbox_k8s_request stop ap
 	      ;;
       sandbox:${alternate_python_version})
         remove_label "sandbox:${alternate_python_version}"
