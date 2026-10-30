@@ -72,6 +72,20 @@ sandbox_k8s_request() {  # sandbox_k8s_request <start|stop>: start or stop this 
     -d "{\"ref\":\"${ref}\",\"inputs\":{\"pr\":\"${number}\",\"action\":\"${1}\"}}" \
     "${URI}/repos/${GITHUB_REPOSITORY}/actions/workflows/sandbox.yml/dispatches" || true
 }
+
+# Likewise for shipit: when SHIPIT_K8S_TRIGGER is "true", every shipit / sudo shipit comment
+# also starts shipit.yml, even when the PR already has `shipit` (commenting again is how an
+# author asks for a fresh merge check, e.g. after resolving a review thread). Never fails the
+# action.
+shipit_k8s_request() {  # shipit_k8s_request <comment|sudo>: start a CI k8s shipit check of this PR
+  [[ "${SHIPIT_K8S_TRIGGER:-false}" == "true" ]] || return 0
+  local ref
+  ref=$(jq -r '.repository.default_branch // "master"' "$GITHUB_EVENT_PATH")
+  curl -sSL -o /dev/null -w "dispatch shipit.yml $1: HTTP %{http_code}\n" \
+    -H "${AUTH_HEADER}" -H "${API_HEADER}" -X POST -H "Content-Type: application/json" \
+    -d "{\"ref\":\"${ref}\",\"inputs\":{\"pr\":\"${number}\",\"trigger\":\"${1}\"}}" \
+    "${URI}/repos/${GITHUB_REPOSITORY}/actions/workflows/shipit.yml/dispatches" || true
+}
 # --------------------------------------------------------------------------------------
 
 # action
@@ -137,6 +151,11 @@ if [[ $comment_body == "shipit" || $comment_body == ":shipit:" || $comment_body 
   fi
   if [[ "$already_shipit" == false ]]; then
     add_label "shipit"
+  fi
+  if [[ $comment_body == "sudo"* ]]; then
+    shipit_k8s_request sudo
+  else
+    shipit_k8s_request comment
   fi
   exit 0
 fi
