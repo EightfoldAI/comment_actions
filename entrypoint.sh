@@ -64,18 +64,14 @@ ci_k8s_request() {  # ci_k8s_request <workflow file>: start a CI k8s run of this
 # one here also starts or stops the CI k8s sandbox (sandbox.yml). Never fails the action.
 #
 # A regional label (`sandbox :australia:` from needs_sandbox:ap) passes its region, the
-# needs_sandbox suffix (eu, ca, gov, uae, wu, ap), only when that region is listed in
-# SANDBOX_K8S_REGIONS (the calling workflow's, space- or comma-separated): a region joins
-# CI k8s by being listed there, with no change here. sandbox.yml rejects a region it does
-# not know (HTTP 422), which leaves the fleet's sandbox alone.
+# needs_sandbox suffix (eu, ca, gov, uae, wu, ap). Which regions have a CI k8s sandbox is
+# sandbox.yml's own list (its region input's options): it rejects any other (HTTP 422),
+# which leaves the fleet's sandbox alone.
 sandbox_k8s_request() {  # sandbox_k8s_request <start|stop> [region]: start or stop this PR's CI k8s sandbox
   [[ "${SANDBOX_K8S_TRIGGER:-false}" == "true" ]] || return 0
   local region="${2:-}" inputs ref
   inputs="\"pr\":\"${number}\",\"action\":\"${1}\""
-  if [[ -n "$region" ]]; then
-    [[ " ${SANDBOX_K8S_REGIONS//,/ } " == *" ${region} "* ]] || return 0
-    inputs="${inputs},\"region\":\"${region}\""
-  fi
+  [[ -z "$region" ]] || inputs="${inputs},\"region\":\"${region}\""
   ref=$(jq -r '.repository.default_branch // "master"' "$GITHUB_EVENT_PATH")
   curl -sSL -o /dev/null -w "dispatch sandbox.yml $1 ${region:-us}: HTTP %{http_code}\n" \
     -H "${AUTH_HEADER}" -H "${API_HEADER}" -X POST -H "Content-Type: application/json" \
