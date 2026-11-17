@@ -61,7 +61,9 @@ ci_k8s_request() {  # ci_k8s_request <workflow file>: start a CI k8s run of this
 }
 
 # Likewise for the sandbox labels: when SANDBOX_K8S_TRIGGER is "true", adding or removing
-# one here also starts or stops the CI k8s sandbox (sandbox.yml). Never fails the action.
+# one here also starts or stops the CI k8s sandbox (sandbox.yml). A needs_sandbox on a PR
+# that already has that region's label asks for a start too (see the needs_sandbox branch).
+# Never fails the action.
 #
 # A regional label (`sandbox :australia:` from needs_sandbox:ap) passes its region, the
 # needs_sandbox suffix (eu, ca, gov, uae, wu, ap). Which regions have a CI k8s sandbox is
@@ -338,29 +340,34 @@ elif [[ $comment_body =~ ^(e2e_)?needs_sandbox(:(eu|gov|ca|uae|wu|ap))?(:(dev|([
         ;;
     esac
   done
+  # The label and the region this comment asks for.
+  if [[ $comment_body =~ (e2e_)?needs_sandbox:eu ]]; then
+    wanted_label="sandbox :eu:"; region=eu
+  elif [[ $comment_body =~ (e2e_)?needs_sandbox:ca ]]; then
+    wanted_label="sandbox :maple_leaf:"; region=ca
+  elif [[ $comment_body =~ (e2e_)?needs_sandbox:gov ]]; then
+    wanted_label="sandbox :classical_building:"; region=gov
+  elif [[ $comment_body =~ (e2e_)?needs_sandbox:uae ]]; then
+    wanted_label="sandbox :united_arab_emirates:"; region=uae
+  elif [[ $comment_body =~ (e2e_)?needs_sandbox:wu ]]; then
+    wanted_label="sandbox :us:"; region=wu
+  elif [[ $comment_body =~ (e2e_)?needs_sandbox:ap ]]; then
+    wanted_label="sandbox :australia:"; region=ap
+  else
+    wanted_label="sandbox"; region=""
+  fi
   if [[ "$already_needs_sandbox" == false ]]; then
-    if [[ $comment_body =~ (e2e_)?needs_sandbox:eu ]]; then
-      add_label "sandbox :eu:"
-      sandbox_k8s_request start eu
-    elif [[ $comment_body =~ (e2e_)?needs_sandbox:ca ]]; then
-      add_label "sandbox :maple_leaf:"
-      sandbox_k8s_request start ca
-    elif [[ $comment_body =~ (e2e_)?needs_sandbox:gov ]]; then
-      add_label "sandbox :classical_building:"
-      sandbox_k8s_request start gov
-    elif [[ $comment_body =~ (e2e_)?needs_sandbox:uae ]]; then
-      add_label "sandbox :united_arab_emirates:"
-      sandbox_k8s_request start uae
-    elif [[ $comment_body =~ (e2e_)?needs_sandbox:wu ]]; then
-      add_label "sandbox :us:"
-      sandbox_k8s_request start wu
-    elif [[ $comment_body =~ (e2e_)?needs_sandbox:ap ]]; then
-      add_label "sandbox :australia:"
-      sandbox_k8s_request start ap
-    else
-      add_label "sandbox"
-      sandbox_k8s_request start
-    fi
+    add_label "$wanted_label"
+    sandbox_k8s_request start "$region"
+  elif [[ $'\n'"$labels"$'\n' == *$'\n'"$wanted_label"$'\n'* ]]; then
+    # The PR already has this region's label: the label is left as it is (the fleet sees
+    # nothing new), but the CI k8s sandbox is asked to start too, and it decides from what
+    # is actually running (vscode's launch_sandbox): a sandbox still running is left as it
+    # is, and the developer is told so (stop_sandbox first for a new one); a label left on
+    # with nothing behind it (a start that failed before its pod reported, a pod killed
+    # outright) gets a new sandbox instead of blocking every request. Another region's
+    # label still blocks a new one, as before.
+    sandbox_k8s_request start "$region"
   fi
 fi
 
