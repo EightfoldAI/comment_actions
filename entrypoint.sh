@@ -50,13 +50,15 @@ AUTH_HEADER="Authorization: token ${GITHUB_TOKEN}"
 # workflow. A label added with GITHUB_TOKEN starts no workflow, so it is started with
 # workflow_dispatch, which GITHUB_TOKEN may trigger (needs `actions: write`). Never fails
 # the action.
-ci_k8s_request() {  # ci_k8s_request <workflow file>: start a CI k8s run of this PR
+ci_k8s_request() {  # ci_k8s_request <workflow file> [account]: start a CI k8s run of this PR
   [[ "${CI_K8S_TRIGGER:-false}" == "true" ]] || return 0
-  local ref
+  local ref inputs
   ref=$(jq -r '.repository.default_branch // "master"' "$GITHUB_EVENT_PATH")
-  curl -sSL -o /dev/null -w "dispatch $1: HTTP %{http_code}\n" \
+  # account: dev runs in the dev region's account (the workflow's dev job); none: prod.
+  inputs="\"pr\":\"${number}\"${2:+,\"account\":\"$2\"}"
+  curl -sSL -o /dev/null -w "dispatch $1 ${2:-prod}: HTTP %{http_code}\n" \
     -H "${AUTH_HEADER}" -H "${API_HEADER}" -X POST -H "Content-Type: application/json" \
-    -d "{\"ref\":\"${ref}\",\"inputs\":{\"pr\":\"${number}\"}}" \
+    -d "{\"ref\":\"${ref}\",\"inputs\":{${inputs}}}" \
     "${URI}/repos/${GITHUB_REPOSITORY}/actions/workflows/${1}/dispatches" || true
 }
 
@@ -214,9 +216,9 @@ if [[ $comment_body == "needs_ci:lite" ]]; then
   fi
 fi
 
-# CI k8s with its suite pods in the dev region's account: needs_ci_dev (full) and
-# needs_ci_dev:lite. The label, and its run (ci_k8s_full_dev.yml / ci_k8s_lite_dev.yml),
-# which removes the label when it finishes. No fleet side and no ci_verified to reset.
+# CI k8s in the dev region's account: needs_ci_dev (full) and needs_ci_dev:lite. The
+# label, and its run (ci_k8s_full.yml / ci_k8s_lite.yml with account dev), which removes
+# the label when it finishes. No fleet side and no ci_verified to reset.
 if [[ $comment_body == "needs_ci_dev" || $comment_body == "needs_ci_dev:lite" ]]; then
   already_needs_ci_dev=false
   for label in $labels; do
@@ -227,9 +229,9 @@ if [[ $comment_body == "needs_ci_dev" || $comment_body == "needs_ci_dev:lite" ]]
   if [[ "$already_needs_ci_dev" == false ]]; then
     add_label "$comment_body"
     if [[ $comment_body == "needs_ci_dev" ]]; then
-      ci_k8s_request "ci_k8s_full_dev.yml"
+      ci_k8s_request "ci_k8s_full.yml" dev
     else
-      ci_k8s_request "ci_k8s_lite_dev.yml"
+      ci_k8s_request "ci_k8s_lite.yml" dev
     fi
   fi
 fi
