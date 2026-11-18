@@ -2,7 +2,7 @@
 # Varun Chopra <vchopra@eightfold.ai>
 #
 # This action runs every time a comment is added to a pull request.
-# Accepts the following commands: shipit, needs_ci, needs_sandbox, e2e_needs_sandbox
+# Accepts the following commands: shipit, needs_ci, needs_ci_dev, needs_sandbox, e2e_needs_sandbox
 
 set -e
 
@@ -64,7 +64,7 @@ ci_k8s_request() {  # ci_k8s_request <workflow file>: start a CI k8s run of this
 # one here also starts or stops the CI k8s sandbox (sandbox.yml). Never fails the action.
 #
 # A regional label (`sandbox :australia:` from needs_sandbox:ap) passes its region, the
-# needs_sandbox suffix (eu, ca, gov, uae, wu, ap). Which regions have a CI k8s sandbox is
+# needs_sandbox suffix (eu, ca, gov, uae, wu, ap, dev -- dev: the dev region's account). Which regions have a CI k8s sandbox is
 # sandbox.yml's own list (its region input's options): it rejects any other (HTTP 422),
 # which leaves the fleet's sandbox alone.
 sandbox_k8s_request() {  # sandbox_k8s_request <start|stop> [region]: start or stop this PR's CI k8s sandbox
@@ -214,6 +214,26 @@ if [[ $comment_body == "needs_ci:lite" ]]; then
   fi
 fi
 
+# CI k8s with its suite pods in the dev region's account: needs_ci_dev (full) and
+# needs_ci_dev:lite. The label, and its run (ci_k8s_full_dev.yml / ci_k8s_lite_dev.yml),
+# which removes the label when it finishes. No fleet side and no ci_verified to reset.
+if [[ $comment_body == "needs_ci_dev" || $comment_body == "needs_ci_dev:lite" ]]; then
+  already_needs_ci_dev=false
+  for label in $labels; do
+    if [[ "$label" == "$comment_body" ]]; then
+      already_needs_ci_dev=true
+    fi
+  done
+  if [[ "$already_needs_ci_dev" == false ]]; then
+    add_label "$comment_body"
+    if [[ $comment_body == "needs_ci_dev" ]]; then
+      ci_k8s_request "ci_k8s_full_dev.yml"
+    else
+      ci_k8s_request "ci_k8s_lite_dev.yml"
+    fi
+  fi
+fi
+
 if [[ $comment_body == "needs_ci${alt_python_version}" ]]; then
   for label in $labels; do
     case $label in
@@ -309,7 +329,7 @@ if [[ $comment_body =~ ^(e2e_)?needs_sandbox(:${alternate_python_version})(:(eu|
     fi
   fi
 
-elif [[ $comment_body =~ ^(e2e_)?needs_sandbox(:(eu|gov|ca|uae|wu|ap))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?([ \t]*)?$ ]]; then
+elif [[ $comment_body =~ ^(e2e_)?needs_sandbox(:(eu|gov|ca|uae|wu|ap|dev))?(:(([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?([ \t]*)?$ ]]; then
   for label in $labels; do
     case $label in
       sandbox)
@@ -331,6 +351,9 @@ elif [[ $comment_body =~ ^(e2e_)?needs_sandbox(:(eu|gov|ca|uae|wu|ap))?(:(dev|([
         already_needs_sandbox=true
         ;;
       "sandbox :australia:")
+        already_needs_sandbox=true
+        ;;
+      "sandbox :test_tube:")
         already_needs_sandbox=true
         ;;
       *)
@@ -357,6 +380,10 @@ elif [[ $comment_body =~ ^(e2e_)?needs_sandbox(:(eu|gov|ca|uae|wu|ap))?(:(dev|([
     elif [[ $comment_body =~ (e2e_)?needs_sandbox:ap ]]; then
       add_label "sandbox :australia:"
       sandbox_k8s_request start ap
+    elif [[ $comment_body =~ (e2e_)?needs_sandbox:dev ]]; then
+      # The dev region's account: CI k8s only (no fleet host polls this label).
+      add_label "sandbox :test_tube:"
+      sandbox_k8s_request start dev
     else
       add_label "sandbox"
       sandbox_k8s_request start
@@ -395,6 +422,10 @@ if [[ $comment_body == "stop_sandbox" ]]; then
 	      remove_label "sandbox%20:australia:"
 	      sandbox_k8s_request stop ap
 	      ;;
+      "sandbox :test_tube:")
+        remove_label "sandbox%20:test_tube:"
+        sandbox_k8s_request stop dev
+        ;;
       sandbox:${alternate_python_version})
         remove_label "sandbox:${alternate_python_version}"
         ;;
