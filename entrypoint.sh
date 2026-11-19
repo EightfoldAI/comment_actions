@@ -50,13 +50,13 @@ AUTH_HEADER="Authorization: token ${GITHUB_TOKEN}"
 # workflow. A label added with GITHUB_TOKEN starts no workflow, so it is started with
 # workflow_dispatch, which GITHUB_TOKEN may trigger (needs `actions: write`). Never fails
 # the action.
-ci_k8s_request() {  # ci_k8s_request <workflow file> [account]: start a CI k8s run of this PR
+ci_k8s_request() {  # ci_k8s_request <workflow file> [ef_region]: start a CI k8s run of this PR
   [[ "${CI_K8S_TRIGGER:-false}" == "true" ]] || return 0
   local ref inputs
   ref=$(jq -r '.repository.default_branch // "master"' "$GITHUB_EVENT_PATH")
-  # account: dev runs in the dev region's account (the workflow's dev job); none: prod.
-  inputs="\"pr\":\"${number}\"${2:+,\"account\":\"$2\"}"
-  curl -sSL -o /dev/null -w "dispatch $1 ${2:-prod}: HTTP %{http_code}\n" \
+  # ef_region: dev-us runs in the dev region (the workflow's dev job); none: us-west-2.
+  inputs="\"pr\":\"${number}\"${2:+,\"ef_region\":\"$2\"}"
+  curl -sSL -o /dev/null -w "dispatch $1 ${2:-us-west-2}: HTTP %{http_code}\n" \
     -H "${AUTH_HEADER}" -H "${API_HEADER}" -X POST -H "Content-Type: application/json" \
     -d "{\"ref\":\"${ref}\",\"inputs\":{${inputs}}}" \
     "${URI}/repos/${GITHUB_REPOSITORY}/actions/workflows/${1}/dispatches" || true
@@ -66,7 +66,7 @@ ci_k8s_request() {  # ci_k8s_request <workflow file> [account]: start a CI k8s r
 # one here also starts or stops the CI k8s sandbox (sandbox.yml). Never fails the action.
 #
 # A regional label (`sandbox :australia:` from needs_sandbox:ap) passes its region, the
-# needs_sandbox suffix (eu, ca, gov, uae, wu, ap, dev -- dev: the dev region's account). Which regions have a CI k8s sandbox is
+# needs_sandbox suffix (eu, ca, gov, uae, wu, ap, dev -- dev: the dev region, dev-us). Which regions have a CI k8s sandbox is
 # sandbox.yml's own list (its region input's options): it rejects any other (HTTP 422),
 # which leaves the fleet's sandbox alone.
 sandbox_k8s_request() {  # sandbox_k8s_request <start|stop> [region]: start or stop this PR's CI k8s sandbox
@@ -216,8 +216,8 @@ if [[ $comment_body == "needs_ci:lite" ]]; then
   fi
 fi
 
-# CI k8s in the dev region's account: needs_ci_dev (full) and needs_ci_dev:lite. The
-# label, and its run (ci_k8s_full.yml / ci_k8s_lite.yml with account dev), which removes
+# CI k8s in the dev region (dev-us): needs_ci_dev (full) and needs_ci_dev:lite. The
+# label, and its run (ci_k8s_full.yml / ci_k8s_lite.yml with ef_region dev-us), which removes
 # the label when it finishes. No fleet side and no ci_verified to reset.
 if [[ $comment_body == "needs_ci_dev" || $comment_body == "needs_ci_dev:lite" ]]; then
   already_needs_ci_dev=false
@@ -229,9 +229,9 @@ if [[ $comment_body == "needs_ci_dev" || $comment_body == "needs_ci_dev:lite" ]]
   if [[ "$already_needs_ci_dev" == false ]]; then
     add_label "$comment_body"
     if [[ $comment_body == "needs_ci_dev" ]]; then
-      ci_k8s_request "ci_k8s_full.yml" dev
+      ci_k8s_request "ci_k8s_full.yml" dev-us
     else
-      ci_k8s_request "ci_k8s_lite.yml" dev
+      ci_k8s_request "ci_k8s_lite.yml" dev-us
     fi
   fi
 fi
@@ -383,7 +383,7 @@ elif [[ $comment_body =~ ^(e2e_)?needs_sandbox(:(eu|gov|ca|uae|wu|ap|dev))?(:(([
       add_label "sandbox :australia:"
       sandbox_k8s_request start ap
     elif [[ $comment_body =~ (e2e_)?needs_sandbox:dev ]]; then
-      # The dev region's account: CI k8s only (no fleet host polls this label).
+      # The dev region (dev-us): CI k8s only (no fleet host polls this label).
       add_label "sandbox :test_tube:"
       sandbox_k8s_request start dev
     else
