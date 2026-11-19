@@ -376,7 +376,6 @@ if [[ $comment_body == "stop_sandbox" ]]; then
     case $label in
       sandbox)
         remove_label "sandbox"
-        sandbox_k8s_request stop
         ;;
       "sandbox :eu:")
         remove_label "sandbox%20:eu:"
@@ -428,4 +427,9 @@ if [[ $comment_body == "stop_sandbox" ]]; then
         ;;
     esac
   done
+  # The US sandbox is stopped whether or not its label is on: a sandbox can be running with
+  # none (the label was removed by hand after its start was asked for), and the labels read
+  # above are the PR's when this run was created, not when the comment was posted. A stop
+  # with nothing running does nothing.
+  sandbox_k8s_request stop
 fi
