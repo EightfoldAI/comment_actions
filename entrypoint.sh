@@ -2,7 +2,7 @@
 # Varun Chopra <vchopra@eightfold.ai>
 #
 # This action runs every time a comment is added to a pull request.
-# Accepts the following commands: shipit, needs_ci, needs_sandbox, e2e_needs_sandbox
+# Accepts the following commands: shipit, needs_ci, needs_ci_dev, needs_sandbox, e2e_needs_sandbox
 
 set -e
 
@@ -50,13 +50,15 @@ AUTH_HEADER="Authorization: token ${GITHUB_TOKEN}"
 # workflow. A label added with GITHUB_TOKEN starts no workflow, so it is started with
 # workflow_dispatch, which GITHUB_TOKEN may trigger (needs `actions: write`). Never fails
 # the action.
-ci_k8s_request() {  # ci_k8s_request <workflow file>: start a CI k8s run of this PR
+ci_k8s_request() {  # ci_k8s_request <workflow file> [ef_region]: start a CI k8s run of this PR
   [[ "${CI_K8S_TRIGGER:-false}" == "true" ]] || return 0
-  local ref
+  local ref inputs
   ref=$(jq -r '.repository.default_branch // "master"' "$GITHUB_EVENT_PATH")
-  curl -sSL -o /dev/null -w "dispatch $1: HTTP %{http_code}\n" \
+  # ef_region: dev-us runs in the dev region (the workflow's dev job); none: us-west-2.
+  inputs="\"pr\":\"${number}\"${2:+,\"ef_region\":\"$2\"}"
+  curl -sSL -o /dev/null -w "dispatch $1 ${2:-us-west-2}: HTTP %{http_code}\n" \
     -H "${AUTH_HEADER}" -H "${API_HEADER}" -X POST -H "Content-Type: application/json" \
-    -d "{\"ref\":\"${ref}\",\"inputs\":{\"pr\":\"${number}\"}}" \
+    -d "{\"ref\":\"${ref}\",\"inputs\":{${inputs}}}" \
     "${URI}/repos/${GITHUB_REPOSITORY}/actions/workflows/${1}/dispatches" || true
 }
 
@@ -66,9 +68,10 @@ ci_k8s_request() {  # ci_k8s_request <workflow file>: start a CI k8s run of this
 # Never fails the action.
 #
 # A regional label (`sandbox :australia:` from needs_sandbox:ap) starts in its region, the
-# needs_sandbox suffix (eu, ca, gov, uae, wu, ap). Which regions have a CI k8s sandbox is
-# sandbox.yml's own list (its region input's options): it rejects any other (HTTP 422),
-# which leaves the fleet's sandbox alone. stop_sandbox stops in every region at once (`all`).
+# needs_sandbox suffix (eu, ca, gov, uae, wu, ap, and dev: the dev region, dev-us). Which
+# regions have a CI k8s sandbox is sandbox.yml's own list (its region input's options): it
+# rejects any other (HTTP 422), which leaves the fleet's sandbox alone. stop_sandbox stops in
+# every region at once (`all`).
 sandbox_k8s_request() {  # sandbox_k8s_request <start|stop> [region]: start or stop this PR's CI k8s sandbox
   [[ "${SANDBOX_K8S_TRIGGER:-false}" == "true" ]] || return 0
   local region="${2:-}" inputs ref
@@ -216,6 +219,26 @@ if [[ $comment_body == "needs_ci:lite" ]]; then
   fi
 fi
 
+# CI k8s in the dev region (dev-us): needs_ci_dev (full) and needs_ci_dev:lite. The
+# label, and its run (ci_k8s_full.yml / ci_k8s_lite.yml with ef_region dev-us), which removes
+# the label when it finishes. No fleet side and no ci_verified to reset.
+if [[ $comment_body == "needs_ci_dev" || $comment_body == "needs_ci_dev:lite" ]]; then
+  already_needs_ci_dev=false
+  for label in $labels; do
+    if [[ "$label" == "$comment_body" ]]; then
+      already_needs_ci_dev=true
+    fi
+  done
+  if [[ "$already_needs_ci_dev" == false ]]; then
+    add_label "$comment_body"
+    if [[ $comment_body == "needs_ci_dev" ]]; then
+      ci_k8s_request "ci_k8s_full.yml" dev-us
+    else
+      ci_k8s_request "ci_k8s_lite.yml" dev-us
+    fi
+  fi
+fi
+
 if [[ $comment_body == "needs_ci${alt_python_version}" ]]; then
   for label in $labels; do
     case $label in
@@ -311,7 +334,7 @@ if [[ $comment_body =~ ^(e2e_)?needs_sandbox(:${alternate_python_version})(:(eu|
     fi
   fi
 
-elif [[ $comment_body =~ ^(e2e_)?needs_sandbox(:(eu|gov|ca|uae|wu|ap))?(:(dev|([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?([ \t]*)?$ ]]; then
+elif [[ $comment_body =~ ^(e2e_)?needs_sandbox(:(eu|gov|ca|uae|wu|ap|dev))?(:(([0-9]+)(\.([0-9]+)?)?))?(:(([a-zA-Z0-9,]+)))?([ \t]*)?$ ]]; then
   for label in $labels; do
     case $label in
       sandbox)
@@ -335,6 +358,9 @@ elif [[ $comment_body =~ ^(e2e_)?needs_sandbox(:(eu|gov|ca|uae|wu|ap))?(:(dev|([
       "sandbox :australia:")
         already_needs_sandbox=true
         ;;
+      "sandbox :test_tube:")
+        already_needs_sandbox=true
+        ;;
       *)
         echo "Unknown label $label"
         ;;
@@ -353,6 +379,9 @@ elif [[ $comment_body =~ ^(e2e_)?needs_sandbox(:(eu|gov|ca|uae|wu|ap))?(:(dev|([
     wanted_label="sandbox :us:"; region=wu
   elif [[ $comment_body =~ (e2e_)?needs_sandbox:ap ]]; then
     wanted_label="sandbox :australia:"; region=ap
+  elif [[ $comment_body =~ (e2e_)?needs_sandbox:dev ]]; then
+    # The dev region (dev-us): CI k8s only (no fleet host polls this label).
+    wanted_label="sandbox :test_tube:"; region=dev
   else
     wanted_label="sandbox"; region=""
   fi
@@ -394,6 +423,9 @@ if [[ $comment_body == "stop_sandbox" ]]; then
         ;;
       "sandbox :australia:")
         remove_label "sandbox%20:australia:"
+        ;;
+      "sandbox :test_tube:")
+        remove_label "sandbox%20:test_tube:"
         ;;
       sandbox:${alternate_python_version})
         remove_label "sandbox:${alternate_python_version}"
